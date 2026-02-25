@@ -1,0 +1,46 @@
+name: PR
+
+on:
+  pull_request:
+
+env:
+  CI: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+concurrency:
+  group: 'ci-${{ github.event.merge_group.head_ref || github.head_ref }}-${{ github.workflow }}'
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ github.head_ref }}
+
+      - name: Setup JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          java-version-file: .java-version
+          distribution: zulu
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+        with:
+          add-job-summary: 'on-failure'
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Check
+        run: ./gradlew check
+
+      - name: Report build results
+        uses: gmazzo/publish-report-annotations@8bec9f79d4fb200c6d42faeeb2e04879646ba04f # v1
+        if: ${{ !cancelled() }}

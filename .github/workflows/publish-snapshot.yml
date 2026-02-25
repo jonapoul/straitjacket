@@ -1,0 +1,56 @@
+name: Publish snapshot
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  checks: write
+
+# This ensures publish jobs run sequentially instead of in parallel
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version-file: .java-version
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          add-job-summary: on-failure
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Get version
+        id: version
+        run: |
+          GRADLE_VERSION="$(grep VERSION_NAME gradle.properties | cut -d "=" -f 2)"
+          echo "GRADLE_VERSION=$GRADLE_VERSION"
+          echo "value=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Publish snapshot
+        if: |
+          github.repository == 'jonapoul/atlas-gradle-plugin' &&
+          github.ref == 'refs/heads/main' &&
+          contains(steps.version.outputs.value, '-SNAPSHOT')
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenCentral -x dokkaGeneratePublicationHtml --no-configuration-cache

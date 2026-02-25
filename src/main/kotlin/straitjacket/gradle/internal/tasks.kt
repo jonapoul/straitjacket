@@ -1,0 +1,74 @@
+package straitjacket.gradle.internal
+
+import org.gradle.api.NamedDomainObjectSet
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.VersionCatalog
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.internal.extensions.stdlib.capitalized
+import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
+import straitjacket.gradle.StraitjacketCheck
+
+/** Aggregate task that depends on all per-catalog check tasks. */
+internal fun Project.registerAggregateCheckTask(): TaskProvider<*> =
+  tasks.register("straitjacketCheck") { t ->
+    t.group = VERIFICATION_GROUP
+    t.description = "Run all Straitjacket version catalog checks."
+  }
+
+/** Per-catalog check task, e.g. straitjacketCheckLibs. */
+internal fun Project.registerPerCatalogCheckTask(
+  catalogName: String,
+  versionCatalog: Provider<VersionCatalog>,
+  matchingConfigs: NamedDomainObjectSet<Configuration>,
+  isIgnored: Provider<Boolean>,
+): TaskProvider<StraitjacketCheck> {
+  val taskName = "straitjacketCheck${catalogName.capitalized()}"
+  return tasks.register(taskName, StraitjacketCheck::class.java) { t ->
+    t.group = VERIFICATION_GROUP
+    t.description =
+      "Check that no resolved dependencies are newer than declared in the '$catalogName' version catalog."
+    t.catalogVersions.set(versionCatalog.map(::buildCatalogVersionMap))
+    t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
+    t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
+    t.onlyIf { !isIgnored.get() }
+  }
+}
+
+private fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String> {
+  val map = mutableMapOf<String, String>()
+  for (alias in catalog.libraryAliases) {
+    catalog.findLibrary(alias).orElse(null)?.get()?.apply {
+      val version = versionConstraint.requiredVersion
+      if (version.isNotEmpty()) {
+        map["${module.group}:${module.name}"] = version
+      }
+    }
+  }
+  return map
+}
+
+/**
+ * Builds a map of group:name -> [highestResolvedVersion, config1, config2, ...] across all
+ * resolvable configurations. Tracks the highest resolved version per dependency (for comparison
+ * against the catalog) and which configurations resolved it (for reporting).
+ */
+private fun buildResolvedVersionMap(
+  matchingConfigs: NamedDomainObjectSet<Configuration>
+): Map<String, List<String>> {
+  val versions = mutableMapOf<String, String>()
+  val configs = mutableMapOf<String, MutableSet<String>>()
+  matchingConfigs.forEach { config ->
+    config.incoming.resolutionResult.allComponents { component ->
+      val id = component.moduleVersion ?: return@allComponents
+      val key = "${id.group}:${id.name}"
+      val existing = versions[key]
+      if (existing == null || Version(id.version) > Version(existing)) {
+        versions[key] = id.version
+      }
+      configs.getOrPut(key) { mutableSetOf() }.add(config.name)
+    }
+  }
+  return versions.mapValues { (key, version) -> listOf(version) + configs.getValue(key).sorted() }
+}

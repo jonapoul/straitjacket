@@ -1,0 +1,20 @@
+public abstract class straitjacket/gradle/StraitjacketCheck : org/gradle/api/DefaultTask {
+	public fun <init> ()V
+	public final fun execute ()V
+	public abstract fun getCatalogVersions ()Lorg/gradle/api/provider/MapProperty;
+	public abstract fun getReportFile ()Lorg/gradle/api/file/RegularFileProperty;
+	public abstract fun getResolvedVersions ()Lorg/gradle/api/provider/MapProperty;
+}
+
+public abstract interface class straitjacket/gradle/StraitjacketExtension {
+	public abstract fun getEnabled ()Lorg/gradle/api/provider/Property;
+	public abstract fun getIgnoredConfigurations ()Lorg/gradle/api/provider/ListProperty;
+	public abstract fun getVersionCatalogName ()Lorg/gradle/api/provider/Property;
+}
+
+public final class straitjacket/gradle/StraitjacketPlugin : org/gradle/api/Plugin {
+	public fun <init> ()V
+	public synthetic fun apply (Ljava/lang/Object;)V
+	public fun apply (Lorg/gradle/api/Project;)V
+}
+

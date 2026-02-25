@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '**'
+
+env:
+  CI: true
+
+jobs:
+  verify-version:
+    runs-on: ubuntu-latest
+    outputs:
+      git-tag: ${{ steps.git-tag.outputs.version }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+          fetch-depth: 0 # get everything
+
+      - name: Get Git tag
+        id: git-tag
+        run: |
+          GIT_TAG="$(git describe --tags --abbrev=0)"
+          echo "GIT_TAG=$GIT_TAG"
+          echo "version=$GIT_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Get Gradle version
+        id: gradle-version
+        run: |
+          GRADLE_VERSION=$(grep VERSION_NAME gradle.properties | cut -d "=" -f 2)
+          echo "GRADLE_VERSION=$GRADLE_VERSION"
+          echo "version=$GRADLE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Git tag matches Gradle version
+        id: verify
+        run: |
+          GRADLE_VERSION="${{ steps.gradle-version.outputs.version }}"
+          GIT_TAG="${{ steps.git-tag.outputs.version }}"
+          if [ -z "$GRADLE_VERSION" ]; then
+            echo "Empty gradle version"
+            exit 1
+          elif [[ "$VERSION" == *"-SNAPSHOT"* ]]; then
+            echo "Can't publish a snapshot"
+            exit 1
+          elif [ -z "$GIT_TAG" ]; then
+            echo "Empty git tag"
+            exit 1
+          elif [ "$GRADLE_VERSION" != "$GIT_TAG" ]; then
+            echo "Gradle version = $GRADLE_VERSION, Git tag = $GIT_TAG => MISMATCH!"
+            exit 1
+          fi
+
+  publish:
+    runs-on: ubuntu-latest
+    if: github.repository == 'jonapoul/atlas-gradle-plugin'
+    container:
+      image: gradle:9.3.1-jdk17
+    permissions:
+      contents: write
+    needs: verify-version
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Publish
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_IN_MEMORY_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_KEY_PASSWORD }}
+        run: ./gradlew publishToMavenCentral -x dokkaGeneratePublicationHtml
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
+          name: v${{ needs.verify-version.outputs.git-tag }}
