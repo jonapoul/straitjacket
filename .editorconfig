@@ -9,7 +9,7 @@ insert_final_newline = true
 max_line_length = 120
 trim_trailing_whitespace = true
 
-# From https://github.com/facebook/ktfmt/blob/main/docs/editorconfig/.editorconfig-default
+# https://github.com/facebook/ktfmt/blob/main/docs/editorconfig/.editorconfig-google
 [{*.kt,*.kts}]
 ij_continuation_indent_size = 2
 ij_java_names_count_to_use_import_on_demand = 9999
