@@ -1,4 +1,5 @@
 [[allowlists]]
 paths = [
+  # Unit tests
   '''src/test/''',
 ]

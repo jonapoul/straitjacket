@@ -9,6 +9,9 @@ permissions:
   contents: write
   checks: write
 
+env:
+  GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
 # This ensures publish jobs run sequentially instead of in parallel
 concurrency:
   group: publish
@@ -18,23 +21,13 @@ jobs:
   publish-snapshot:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           fetch-tags: true
-
-      - name: Set up Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: "zulu"
-          java-version-file: .java-version
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          add-job-summary: on-failure
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - uses: ./.github/actions/setup-java
+      - uses: ./.github/actions/setup-gradle
+      - uses: ./.github/actions/setup-gradle-properties
 
       - name: Get version
         id: version
@@ -45,7 +38,7 @@ jobs:
 
       - name: Publish snapshot
         if: |
-          github.repository == 'jonapoul/atlas-gradle-plugin' &&
+          github.repository == 'jonapoul/straitjacket' &&
           github.ref == 'refs/heads/main' &&
           contains(steps.version.outputs.value, '-SNAPSHOT')
         env:
