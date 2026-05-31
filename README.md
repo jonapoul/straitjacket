@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/></a>
   <a href="https://github.com/jonapoul/straitjacket/releases"><img alt="Release" src="https://img.shields.io/github/v/release/jonapoul/straitjacket"/></a>
-  <a href="https://github.com/jonapoul/straitjacket"><img alt="Coverage" src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/jonapoul/995f996e31d24ad523bde9f758307d9a/raw/c0ad35290938e23f533c44309aa517fe7505e4a9/straightjacket-coverage.json"/></a>
+  <a href="https://github.com/jonapoul/straitjacket"><img alt="Coverage" src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/jonapoul/995f996e31d24ad523bde9f758307d9a/raw/straightjacket-coverage.json"/></a>
 </p>
 
 ## Introduction
