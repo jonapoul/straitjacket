@@ -26,7 +26,9 @@ internal value class Version(val value: String) : Comparable<Version> {
 
       // Normal release is GREATER than pre-release
       preA == null && preB != null -> 1
-      else -> comparePreReleaseParts(preA!!, preB!!) // Both have pre-releases
+
+      // Both have pre-releases
+      else -> comparePreReleaseParts(requireNotNull(preA), requireNotNull(preB))
     }
   }
 
