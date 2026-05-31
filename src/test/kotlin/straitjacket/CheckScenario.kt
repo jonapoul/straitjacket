@@ -56,7 +56,7 @@ class CheckScenario : ScenarioTest() {
         FAILURE: Build failed with an exception.
 
         * What went wrong:
-        Execution failed for task ':straitjacketCheckLibs'.
+        Execution failed for task ':straitjacketCheckLibs' (registered by plugin 'dev.jonpoulton.straitjacket').
         > Straitjacket found dependencies resolved to versions newer than the version catalog declares:
 
             com.squareup.okio:okio:3.16.0 -> 3.16.4 (in compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath)
