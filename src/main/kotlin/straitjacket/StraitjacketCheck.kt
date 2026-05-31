@@ -31,8 +31,8 @@ public abstract class StraitjacketCheck : DefaultTask() {
       val resolvedVersion = parts.first()
       val configNames = parts.drop(1)
       if (Version(resolvedVersion) > Version(catalogVersion)) {
-        violations +=
-          "$coordinate:$catalogVersion -> $resolvedVersion (in ${configNames.joinToString(", ")})"
+        val configNameStr = configNames.joinToString(", ")
+        violations += "$coordinate:$catalogVersion -> $resolvedVersion (in $configNameStr)"
       }
     }
 

@@ -24,7 +24,9 @@ internal fun DependencyResolveDetails.applyRestriction(versionCatalog: VersionCa
         ) {
           useVersion(catalogVersion)
           because(
-            "straitjacket: version catalog '${versionCatalog.name}' declares $group:$name:$catalogVersion"
+            "straitjacket: " +
+              "version catalog '${versionCatalog.name}' declares $group:$name:$catalogVersion, which is greater " +
+              "than $requestedVersion"
           )
         }
         return
