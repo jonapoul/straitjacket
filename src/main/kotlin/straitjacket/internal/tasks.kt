@@ -11,10 +11,11 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
 import straitjacket.StraitjacketCheck
 
 /** Aggregate task that depends on all per-catalog check tasks. */
-internal fun Project.registerAggregateCheckTask(): TaskProvider<*> =
+internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): TaskProvider<*> =
   tasks.register("straitjacketCheck") { t ->
     t.group = VERIFICATION_GROUP
     t.description = "Run all Straitjacket version catalog checks."
+    t.onlyIf { enabled.get() }
   }
 
 /** Per-catalog check task, e.g. straitjacketCheckLibs. */

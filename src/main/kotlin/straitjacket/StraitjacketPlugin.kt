@@ -40,7 +40,7 @@ public class StraitjacketPlugin : Plugin<Project> {
         c.shouldBeConstrained(ignoredConfigurations)
       }
 
-      val aggregateCheck = registerAggregateCheckTask()
+      val aggregateCheck = registerAggregateCheckTask(enabled)
 
       pluginManager.withPlugin("base") {
         tasks.named("check").configure { t -> t.dependsOn(aggregateCheck) }
