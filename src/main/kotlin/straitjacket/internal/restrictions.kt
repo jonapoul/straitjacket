@@ -1,4 +1,4 @@
-package straitjacket.gradle.internal
+package straitjacket.internal
 
 import org.gradle.api.artifacts.DependencyResolveDetails
 import org.gradle.api.artifacts.VersionCatalog

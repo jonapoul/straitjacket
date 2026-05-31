@@ -1,4 +1,4 @@
-package straitjacket.gradle
+package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.ScenarioTest

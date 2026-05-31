@@ -1,4 +1,4 @@
-package straitjacket.gradle
+package straitjacket
 
 import assertk.Assert
 import assertk.assertThat
@@ -6,7 +6,7 @@ import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import assertk.assertions.isZero
 import kotlin.test.Test
-import straitjacket.gradle.internal.Version
+import straitjacket.internal.Version
 
 class VersionTest {
   @Test

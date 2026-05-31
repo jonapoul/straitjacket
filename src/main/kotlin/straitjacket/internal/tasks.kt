@@ -1,4 +1,4 @@
-package straitjacket.gradle.internal
+package straitjacket.internal
 
 import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Project
@@ -8,7 +8,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.extensions.stdlib.capitalized
 import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
-import straitjacket.gradle.StraitjacketCheck
+import straitjacket.StraitjacketCheck
 
 /** Aggregate task that depends on all per-catalog check tasks. */
 internal fun Project.registerAggregateCheckTask(): TaskProvider<*> =
