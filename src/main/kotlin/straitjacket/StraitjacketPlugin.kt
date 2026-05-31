@@ -14,11 +14,13 @@ public class StraitjacketPlugin : Plugin<Project> {
     with(target) {
       val extension = extensions.create("straitjacket", StraitjacketExtension::class.java)
       val enabled = extension.enabled.convention(true)
-      val ignoredConfigs = extension.ignoredConfigurations.convention(emptySet())
+      val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
       val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
 
       val versionCatalogs = extensions.getByType(VersionCatalogsExtension::class.java)
-      val matchingConfigs = configurations.matching { it.shouldBeConstrained(ignoredConfigs) }
+      val matchingConfigs = configurations.matching {
+        it.shouldBeConstrained(ignoredConfigurations)
+      }
 
       val aggregateCheck = registerAggregateCheckTask()
 
