@@ -7,7 +7,7 @@ assertk = { module = "com.willowtreeapps.assertk:assertk", version = "0.28.1" }
 blueprintAssertk = { module = "dev.jonpoulton.blueprint:test-assertk", version.ref = "blueprint" }
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
-ktfmt = { module = "com.facebook:ktfmt", version = "0.61" } # only used in ktfmt.sh
+ktfmt = { module = "com.facebook:ktfmt", version = "0.63" } # only used in ktfmt.sh
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.7" }
