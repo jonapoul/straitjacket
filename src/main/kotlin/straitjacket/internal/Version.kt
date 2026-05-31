@@ -20,8 +20,9 @@ internal value class Version(val value: String) : Comparable<Version> {
     // 3. If main versions are equal, handle SemVer Pre-release precedence
     return when {
       preA == null && preB == null -> 0
-      preA != null && preB == null -> -1 // Pre-release is LESS than normal release (e.g., 1.0.0-alpha < 1.0.0)
-      preA == null && preB != null -> 1  // Normal release is GREATER than pre-release
+      preA != null && preB == null ->
+        -1 // Pre-release is LESS than normal release (e.g., 1.0.0-alpha < 1.0.0)
+      preA == null && preB != null -> 1 // Normal release is GREATER than pre-release
       else -> comparePreReleaseParts(preA!!, preB!!) // Both have pre-releases
     }
   }
@@ -62,13 +63,14 @@ internal value class Version(val value: String) : Comparable<Version> {
       val numA = partA.toLongOrNull()
       val numB = partB.toLongOrNull()
 
-      val cmp = when {
-        // Numeric identifiers always have lower precedence than non-numeric identifiers
-        numA != null && numB != null -> numA.compareTo(numB)
-        numA != null && numB == null -> -1
-        numA == null && numB != null -> 1
-        else -> partA.compareTo(partB) // Both textual (lexicographical)
-      }
+      val cmp =
+        when {
+          // Numeric identifiers always have lower precedence than non-numeric identifiers
+          numA != null && numB != null -> numA.compareTo(numB)
+          numA != null && numB == null -> -1
+          numA == null && numB != null -> 1
+          else -> partA.compareTo(partB) // Both textual (lexicographical)
+        }
       if (cmp != 0) return cmp
     }
 
