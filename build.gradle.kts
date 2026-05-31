@@ -37,8 +37,8 @@ dependencies {
 }
 
 gradlePlugin {
-  vcsUrl = "https://github.com/jonapoul/straitjacket-gradle-plugin.git"
-  website = "https://github.com/jonapoul/straitjacket-gradle-plugin"
+  vcsUrl = "https://github.com/jonapoul/straitjacket.git"
+  website = "https://github.com/jonapoul/straitjacket"
 
   plugins {
     register("straitjacket") {

@@ -42,4 +42,8 @@ develocity.buildScan {
   uploadInBackground = false
 }
 
+kover {
+  enableCoverage()
+}
+
 enableFeaturePreview("STABLE_CONFIGURATION_CACHE")

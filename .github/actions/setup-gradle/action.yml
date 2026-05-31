@@ -1,0 +1,11 @@
+name: Setup Gradle
+description: Set up Gradle with caching and encryption
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6
+      with:
+        add-job-summary: on-failure
+        cache-encryption-key: ${{ env.GRADLE_ENCRYPTION_KEY }}

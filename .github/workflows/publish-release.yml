@@ -15,7 +15,7 @@ jobs:
       git-tag: ${{ steps.git-tag.outputs.version }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-tags: true
           fetch-depth: 0 # get everything
@@ -55,7 +55,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'jonapoul/atlas-gradle-plugin'
+    if: github.repository == 'jonapoul/straitjacket'
     container:
       image: gradle:9.3.1-jdk17
     permissions:
@@ -63,7 +63,7 @@ jobs:
     needs: verify-version
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-tags: true
           fetch-depth: 0
@@ -77,7 +77,7 @@ jobs:
         run: ./gradlew publishToMavenCentral -x dokkaGeneratePublicationHtml
 
       - name: Create release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@bcfe5470707e8832e12347755757cec0eb3c22af # v1.18.0
         with:
           generateReleaseNotes: true
           name: v${{ needs.verify-version.outputs.git-tag }}
