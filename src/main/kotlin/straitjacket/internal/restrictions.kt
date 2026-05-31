@@ -13,7 +13,8 @@ internal fun DependencyResolveDetails.applyRestriction(versionCatalog: VersionCa
   val name = requested.name
 
   for (alias in versionCatalog.libraryAliases) {
-    versionCatalog.findLibrary(alias).orElse(null)?.get()?.apply {
+    val lib = versionCatalog.findLibrary(alias).orElse(null)?.get()
+    lib?.apply {
       if (module.group == group && module.name == name) {
         val catalogVersion = versionConstraint.requiredVersion
         val requestedVersion = requested.version

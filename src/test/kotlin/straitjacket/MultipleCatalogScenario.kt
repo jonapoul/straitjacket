@@ -42,15 +42,17 @@ class MultipleCatalogScenario : ScenarioTest() {
 
     ("gradle" / "libs.versions.toml")(
       """
-        [libraries]
+      [libraries]
       """
+        .trimIndent()
     )
 
     ("gradle" / "someOtherLibs.versions.toml")(
       """
-        [libraries]
-        okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
+      [libraries]
+      okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
       """
+        .trimIndent()
     )
   }
 

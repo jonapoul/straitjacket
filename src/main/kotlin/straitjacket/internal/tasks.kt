@@ -11,10 +11,11 @@ import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
 import straitjacket.StraitjacketCheck
 
 /** Aggregate task that depends on all per-catalog check tasks. */
-internal fun Project.registerAggregateCheckTask(): TaskProvider<*> =
+internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): TaskProvider<*> =
   tasks.register("straitjacketCheck") { t ->
     t.group = VERIFICATION_GROUP
     t.description = "Run all Straitjacket version catalog checks."
+    t.onlyIf { enabled.get() }
   }
 
 /** Per-catalog check task, e.g. straitjacketCheckLibs. */
@@ -22,7 +23,7 @@ internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
   versionCatalog: Provider<VersionCatalog>,
   matchingConfigs: NamedDomainObjectSet<Configuration>,
-  isIgnored: Provider<Boolean>,
+  active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
   val taskName = "straitjacketCheck${catalogName.capitalized()}"
   return tasks.register(taskName, StraitjacketCheck::class.java) { t ->
@@ -32,14 +33,15 @@ internal fun Project.registerPerCatalogCheckTask(
     t.catalogVersions.set(versionCatalog.map(::buildCatalogVersionMap))
     t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
-    t.onlyIf { !isIgnored.get() }
+    t.onlyIf { active.get() }
   }
 }
 
 private fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String> {
   val map = mutableMapOf<String, String>()
   for (alias in catalog.libraryAliases) {
-    catalog.findLibrary(alias).orElse(null)?.get()?.apply {
+    val lib = catalog.findLibrary(alias).orElse(null)?.get()
+    lib?.apply {
       val version = versionConstraint.requiredVersion
       if (version.isNotEmpty()) {
         map["${module.group}:${module.name}"] = version

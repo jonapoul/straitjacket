@@ -83,6 +83,8 @@ licensee {
 detekt {
   config.from(file("config/detekt.yml"))
   buildUponDefaultConfig = true
+  allRules = true
+  parallel = true
 }
 
 val detektTasks = tasks.withType(Detekt::class)

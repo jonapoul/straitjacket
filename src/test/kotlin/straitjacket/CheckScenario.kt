@@ -5,6 +5,7 @@ import blueprint.test.ScenarioTest
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.taskSkipped
 import blueprint.test.taskSucceeded
 import kotlin.test.Test
 import straitjacket.test.GRADLE_VERSION
@@ -23,17 +24,24 @@ class CheckScenario : ScenarioTest() {
       }
 
       val okioVersion by properties
+
+      straitjacket {
+        enabled = providers.gradleProperty("straitjacketEnabled").map { it.toBoolean() }.getOrElse(true)
+      }
+
       dependencies {
         implementation("com.squareup.okio:okio:$okioVersion")
       }
       """
+        .trimIndent()
     )
 
     ("gradle" / "libs.versions.toml")(
       """
-        [libraries]
-        okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
+      [libraries]
+      okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
       """
+        .trimIndent()
     )
   }
 
@@ -65,5 +73,13 @@ class CheckScenario : ScenarioTest() {
         """
           .trimIndent()
       )
+  }
+
+  @Test
+  fun `disabling the plugin skips the checks even with a newer version`() = runScenario {
+    assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4", "-PstraitjacketEnabled=false")
+      .buildsSuccessfully()
+      .taskSkipped(":straitjacketCheckLibs")
+      .taskSkipped(":straitjacketCheck")
   }
 }
