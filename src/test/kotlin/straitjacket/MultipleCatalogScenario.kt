@@ -68,7 +68,7 @@ class MultipleCatalogScenario : ScenarioTest() {
         Execution failed for task ':straitjacketCheckSomeOtherLibs'.
         > Straitjacket found dependencies resolved to versions newer than the version catalog declares:
 
-            com.squareup.okio:okio:3.16.0 -> 3.16.4 (in compileClasspath, implementationDependenciesMetadata, runtimeClasspath, testCompileClasspath, testImplementationDependenciesMetadata, testRuntimeClasspath)
+            com.squareup.okio:okio:3.16.0 -> 3.16.4 (in compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath)
 
           Update your version catalog or add these configurations to ignoredConfigurations.
         """
