@@ -22,20 +22,22 @@ class MultipleCatalogScenario : ScenarioTest() {
             }
           }
         }
-      """.trimIndent()
+      """
+        .trimIndent()
     )
 
     "build.gradle.kts"(
       """
-        plugins {
-          kotlin("jvm")
-          id("dev.jonpoulton.straitjacket")
-        }
+      plugins {
+        kotlin("jvm")
+        id("dev.jonpoulton.straitjacket")
+      }
 
-        dependencies {
-          implementation("com.squareup.okio:okio:3.16.4")
-        }
-      """.trimIndent()
+      dependencies {
+        implementation("com.squareup.okio:okio:3.16.4")
+      }
+      """
+        .trimIndent()
     )
 
     ("gradle" / "libs.versions.toml")(
