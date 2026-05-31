@@ -1,9 +1,10 @@
-package straitjacket.gradle
+package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.ScenarioTest
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
+import blueprint.test.taskSkipped
 import blueprint.test.taskSucceeded
 import kotlin.test.Test
 import straitjacket.test.GRADLE_VERSION
@@ -48,6 +49,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
     ("gradle" / "libs.versions.toml")(
       """
         [libraries]
+        okio = { module = "com.squareup.okio:okio", version = "3.16.4" }
       """
     )
 
@@ -64,7 +66,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
     assertThatTask(":straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
-      .taskSucceeded(":straitjacketCheckSomeOtherLibs")
+      .taskSkipped(":straitjacketCheckSomeOtherLibs")
       .taskSucceeded(":straitjacketCheck")
   }
 }

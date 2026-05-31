@@ -1,4 +1,4 @@
-package straitjacket.gradle
+package straitjacket
 
 import assertk.Assert
 import assertk.assertThat
@@ -6,7 +6,7 @@ import assertk.assertions.isGreaterThan
 import assertk.assertions.isLessThan
 import assertk.assertions.isZero
 import kotlin.test.Test
-import straitjacket.gradle.internal.Version
+import straitjacket.internal.Version
 
 class VersionTest {
   @Test
@@ -71,11 +71,14 @@ class VersionTest {
 
 private fun assertThatVersion(version: String): Assert<Version> = assertThat(Version(version))
 
-private fun Assert<Version>.isGreaterThanVersion(other: String): Assert<Version> =
-  transform { it.also { v -> assertThat(v.compareTo(Version(other))).isGreaterThan(0) } }
+private fun Assert<Version>.isGreaterThanVersion(other: String): Assert<Version> = transform {
+  it.also { v -> assertThat(v.compareTo(Version(other))).isGreaterThan(0) }
+}
 
-private fun Assert<Version>.isLessThanVersion(other: String): Assert<Version> =
-  transform { it.also { v -> assertThat(v.compareTo(Version(other))).isLessThan(0) } }
+private fun Assert<Version>.isLessThanVersion(other: String): Assert<Version> = transform {
+  it.also { v -> assertThat(v.compareTo(Version(other))).isLessThan(0) }
+}
 
-private fun Assert<Version>.isEqualToVersion(other: String): Assert<Version> =
-  transform { it.also { v -> assertThat(v.compareTo(Version(other))).isZero() } }
+private fun Assert<Version>.isEqualToVersion(other: String): Assert<Version> = transform {
+  it.also { v -> assertThat(v.compareTo(Version(other))).isZero() }
+}

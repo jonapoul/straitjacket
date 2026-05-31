@@ -1,4 +1,4 @@
-package straitjacket.gradle.internal
+package straitjacket.internal
 
 /**
  * A comparable version string. Splits on "." and "-", comparing numeric segments numerically and

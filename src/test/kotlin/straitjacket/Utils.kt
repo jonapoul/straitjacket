@@ -1,4 +1,4 @@
-package straitjacket.gradle
+package straitjacket
 
 import assertk.Assert
 import assertk.assertions.contains

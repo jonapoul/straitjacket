@@ -1,4 +1,4 @@
-package straitjacket.gradle
+package straitjacket
 
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty

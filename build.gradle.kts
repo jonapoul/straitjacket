@@ -44,7 +44,7 @@ gradlePlugin {
     register("straitjacket") {
       id = "dev.jonpoulton.straitjacket"
       description = providers.gradleProperty("POM_DESCRIPTION").get()
-      implementationClass = "straitjacket.gradle.StraitjacketPlugin"
+      implementationClass = "straitjacket.StraitjacketPlugin"
       displayName = "Straitjacket"
       tags.addAll("straitjacket", "dependency", "restriction")
     }

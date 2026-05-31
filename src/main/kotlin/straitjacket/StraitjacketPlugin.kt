@@ -1,13 +1,13 @@
-package straitjacket.gradle
+package straitjacket
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.SetProperty
-import straitjacket.gradle.internal.applyRestriction
-import straitjacket.gradle.internal.registerAggregateCheckTask
-import straitjacket.gradle.internal.registerPerCatalogCheckTask
+import straitjacket.internal.applyRestriction
+import straitjacket.internal.registerAggregateCheckTask
+import straitjacket.internal.registerPerCatalogCheckTask
 
 public class StraitjacketPlugin : Plugin<Project> {
   override fun apply(target: Project): Unit =
