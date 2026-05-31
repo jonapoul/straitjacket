@@ -14,7 +14,7 @@ buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.9" }
 blueprint-core = { id = "dev.jonpoulton.blueprint", version.ref = "blueprint" }
 blueprint-test = { id = "dev.jonpoulton.blueprint.test", version.ref = "blueprint" }
 detekt = { id = "dev.detekt", version = "2.0.0-alpha.3" }
-dokka = { id = "org.jetbrains.dokka", version = "2.1.0" }
+dokka = { id = "org.jetbrains.dokka", version = "2.2.0" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version = "2.2.0" }
 licensee = { id = "app.cash.licensee", version = "1.14.1" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.36.0" }
