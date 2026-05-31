@@ -27,6 +27,7 @@ class CheckScenario : ScenarioTest() {
         implementation("com.squareup.okio:okio:$okioVersion")
       }
       """
+        .trimIndent()
     )
 
     ("gradle" / "libs.versions.toml")(
@@ -34,6 +35,7 @@ class CheckScenario : ScenarioTest() {
         [libraries]
         okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
       """
+        .trimIndent()
     )
   }
 

@@ -51,6 +51,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
         [libraries]
         okio = { module = "com.squareup.okio:okio", version = "3.16.4" }
       """
+        .trimIndent()
     )
 
     ("gradle" / "someOtherLibs.versions.toml")(
@@ -58,6 +59,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
         [libraries]
         okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
       """
+        .trimIndent()
     )
   }
 

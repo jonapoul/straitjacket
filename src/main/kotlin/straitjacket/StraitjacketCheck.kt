@@ -10,16 +10,22 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import straitjacket.internal.Version
 
+/**
+ * Validates that all dependencies in the allowed [org.gradle.api.artifacts.Configuration]s match the version declared
+ * in the given version catalog files. If no match, assume it's valid and just a passthrough dependency.
+ */
 @CacheableTask
 public abstract class StraitjacketCheck : DefaultTask() {
-  /** group:name -> catalogVersion */
+  /** Map of `"$group:$name"` to `"$catalogVersion"`. */
   @get:Input public abstract val catalogVersions: MapProperty<String, String>
 
-  /** group:name -> [resolvedVersion, config1, config2, ...] */
+  /** Map of `"$group:$name"` to `[resolvedVersion, config1, config2, ...]`. */
   @get:Input public abstract val resolvedVersions: MapProperty<String, List<String>>
 
+  /** Generated report file. If successful, this file will be created with no contents. */
   @get:OutputFile public abstract val reportFile: RegularFileProperty
 
+  /** Runs the check. */
   @TaskAction
   public fun execute() {
     val catalog = catalogVersions.get()

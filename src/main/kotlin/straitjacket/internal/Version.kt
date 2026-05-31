@@ -28,7 +28,7 @@ internal value class Version(val value: String) : Comparable<Version> {
       preA == null && preB != null -> 1
 
       // Both have pre-releases
-      else -> comparePreReleaseParts(requireNotNull(preA), requireNotNull(preB))
+      else -> comparePreReleaseParts(preA = requireNotNull(preA), preB = requireNotNull(preB))
     }
   }
 
@@ -37,14 +37,14 @@ internal value class Version(val value: String) : Comparable<Version> {
     return if (dashIndex == -1) {
       version to null
     } else {
-      version.substring(0, dashIndex) to version.substring(dashIndex + 1)
+      version.substring(startIndex = 0, endIndex = dashIndex) to version.substring(dashIndex + 1)
     }
   }
 
   private fun compareNumericParts(mainA: String, mainB: String): Int {
     val partsA = mainA.split(".")
     val partsB = mainB.split(".")
-    val maxLen = maxOf(partsA.size, partsB.size)
+    val maxLen = maxOf(a = partsA.size, b = partsB.size)
 
     for (i in 0 until maxLen) {
       val numA = partsA.getOrNull(i)?.toLongOrNull() ?: 0L
@@ -59,7 +59,7 @@ internal value class Version(val value: String) : Comparable<Version> {
     // SemVer pre-releases can be dot-separated (e.g., alpha.1)
     val partsA = preA.split(".")
     val partsB = preB.split(".")
-    val minLen = minOf(partsA.size, partsB.size)
+    val minLen = minOf(a = partsA.size, b = partsB.size)
 
     for (i in 0 until minLen) {
       val partA = partsA[i]

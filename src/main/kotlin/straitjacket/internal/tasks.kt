@@ -39,7 +39,8 @@ internal fun Project.registerPerCatalogCheckTask(
 private fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String> {
   val map = mutableMapOf<String, String>()
   for (alias in catalog.libraryAliases) {
-    catalog.findLibrary(alias).orElse(null)?.get()?.apply {
+    val lib = catalog.findLibrary(alias).orElse(null)?.get()
+    lib?.apply {
       val version = versionConstraint.requiredVersion
       if (version.isNotEmpty()) {
         map["${module.group}:${module.name}"] = version

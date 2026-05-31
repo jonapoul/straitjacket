@@ -9,6 +9,7 @@ import straitjacket.internal.applyRestriction
 import straitjacket.internal.registerAggregateCheckTask
 import straitjacket.internal.registerPerCatalogCheckTask
 
+/** Sets up and configures the check task. */
 public class StraitjacketPlugin : Plugin<Project> {
   override fun apply(target: Project): Unit =
     with(target) {
@@ -18,8 +19,8 @@ public class StraitjacketPlugin : Plugin<Project> {
       val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
 
       val versionCatalogs = extensions.getByType(VersionCatalogsExtension::class.java)
-      val matchingConfigs = configurations.matching {
-        it.shouldBeConstrained(ignoredConfigurations)
+      val matchingConfigs = configurations.matching { c ->
+        c.shouldBeConstrained(ignoredConfigurations)
       }
 
       val aggregateCheck = registerAggregateCheckTask()

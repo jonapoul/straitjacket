@@ -1,1 +1,21 @@
 ---
+complexity:
+  LabeledExpression:
+    active: false
+
+comments:
+  DocumentationOverPrivateFunction:
+    active: false
+
+naming:
+  FunctionNameMaxLength:
+    excludes: ['**/test/**']
+  NonBooleanPropertyPrefixedWithIs:
+    active: false
+    # allowSingleTypedGenerics: false TODO: uncomment when Detekt v2.0.0-alpha.4 is released
+
+style:
+  MultilineRawStringIndentation:
+    active: false
+  RedundantVisibilityModifier:
+    active: false
