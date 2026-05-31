@@ -1,8 +1,18 @@
 package straitjacket.internal
 
 /**
- * A comparable version string. Splits on "." and "-", comparing numeric segments numerically and
- * non-numeric segments (e.g. "alpha", "jre") lexicographically.
+ * A comparable version string following SemVer precedence rules.
+ *
+ * The value is split into a main version and an optional pre-release identifier at the first "-"
+ * (e.g. "1.0.0-alpha.1" -> main "1.0.0", pre-release "alpha.1"):
+ * - Main versions are compared by their dot-separated numeric segments, with missing segments
+ *   treated as 0 (so "1.2" == "1.2.0"). Non-numeric main segments are also treated as 0.
+ * - A pre-release version has lower precedence than the matching release ("1.0.0-alpha" < "1.0.0").
+ * - Pre-release identifiers are compared field-by-field: numeric fields compare numerically,
+ *   numeric fields rank below non-numeric fields, non-numeric fields compare lexicographically, and
+ *   a larger set of fields wins when all shared fields are equal ("alpha.1" > "alpha").
+ *
+ * Build metadata ("+...") is not stripped and may compare incorrectly.
  */
 @JvmInline
 internal value class Version(val value: String) : Comparable<Version> {

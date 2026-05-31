@@ -22,7 +22,7 @@ internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
   versionCatalog: Provider<VersionCatalog>,
   matchingConfigs: NamedDomainObjectSet<Configuration>,
-  isIgnored: Provider<Boolean>,
+  active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
   val taskName = "straitjacketCheck${catalogName.capitalized()}"
   return tasks.register(taskName, StraitjacketCheck::class.java) { t ->
@@ -32,7 +32,7 @@ internal fun Project.registerPerCatalogCheckTask(
     t.catalogVersions.set(versionCatalog.map(::buildCatalogVersionMap))
     t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
-    t.onlyIf { !isIgnored.get() }
+    t.onlyIf { active.get() }
   }
 }
 

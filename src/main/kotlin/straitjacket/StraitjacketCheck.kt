@@ -11,8 +11,9 @@ import org.gradle.api.tasks.TaskAction
 import straitjacket.internal.Version
 
 /**
- * Validates that all dependencies in the allowed [org.gradle.api.artifacts.Configuration]s match the version declared
- * in the given version catalog files. If no match, assume it's valid and just a passthrough dependency.
+ * Validates that all dependencies in the allowed [org.gradle.api.artifacts.Configuration]s match
+ * the version declared in the given version catalog files. If no match, assume it's valid and just
+ * a passthrough dependency.
  */
 @CacheableTask
 public abstract class StraitjacketCheck : DefaultTask() {
