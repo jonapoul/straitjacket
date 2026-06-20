@@ -1,17 +1,18 @@
 package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
-import blueprint.test.ScenarioTest
 import blueprint.test.assertThatTask
 import blueprint.test.failsBuild
 import kotlin.test.Test
-import straitjacket.test.GRADLE_VERSION
+import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.buildGradleKts
+import straitjacket.test.libsVersionsToml
+import straitjacket.test.settingsGradleKts
+import straitjacket.test.trimmedOutputContains
 
-class MultipleCatalogScenario : ScenarioTest() {
-  override val gradleVersion = GRADLE_VERSION
-
+class MultipleCatalogScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
-    "settings.gradle.kts"(
+    settingsGradleKts(
       """
         $DEFAULT_REPOSITORIES_KTS
 
@@ -26,7 +27,7 @@ class MultipleCatalogScenario : ScenarioTest() {
         .trimIndent()
     )
 
-    "build.gradle.kts"(
+    buildGradleKts(
       """
       plugins {
         kotlin("jvm")
@@ -40,7 +41,7 @@ class MultipleCatalogScenario : ScenarioTest() {
         .trimIndent()
     )
 
-    ("gradle" / "libs.versions.toml")(
+    libsVersionsToml(
       """
       [libraries]
       """
@@ -57,7 +58,7 @@ class MultipleCatalogScenario : ScenarioTest() {
   }
 
   @Test
-  fun `non-ignored catalog fails check when dependency is newer`() = runScenario {
+  fun `a dependency newer than a non-ignored catalog declares fails the check`() = runScenario {
     assertThatTask(":straitjacketCheck")
       .failsBuild()
       .trimmedOutputContains(

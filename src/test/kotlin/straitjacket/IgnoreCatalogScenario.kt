@@ -1,19 +1,19 @@
 package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
-import blueprint.test.ScenarioTest
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
 import blueprint.test.taskSkipped
 import blueprint.test.taskSucceeded
 import kotlin.test.Test
-import straitjacket.test.GRADLE_VERSION
+import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.buildGradleKts
+import straitjacket.test.libsVersionsToml
+import straitjacket.test.settingsGradleKts
 
-class IgnoreCatalogScenario : ScenarioTest() {
-  override val gradleVersion = GRADLE_VERSION
-
+class IgnoreCatalogScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
-    "settings.gradle.kts"(
+    settingsGradleKts(
       """
         $DEFAULT_REPOSITORIES_KTS
 
@@ -28,7 +28,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
         .trimIndent()
     )
 
-    "build.gradle.kts"(
+    buildGradleKts(
       """
       plugins {
         kotlin("jvm")
@@ -46,7 +46,7 @@ class IgnoreCatalogScenario : ScenarioTest() {
         .trimIndent()
     )
 
-    ("gradle" / "libs.versions.toml")(
+    libsVersionsToml(
       """
       [libraries]
       okio = { module = "com.squareup.okio:okio", version = "3.16.4" }
@@ -64,11 +64,12 @@ class IgnoreCatalogScenario : ScenarioTest() {
   }
 
   @Test
-  fun `ignored catalog does not fail check`() = runScenario {
-    assertThatTask(":straitjacketCheck")
-      .buildsSuccessfully()
-      .taskSucceeded(":straitjacketCheckLibs")
-      .taskSkipped(":straitjacketCheckSomeOtherLibs")
-      .taskSucceeded(":straitjacketCheck")
-  }
+  fun `a dependency newer than an ignored catalog declares does not fail the check`() =
+    runScenario {
+      assertThatTask(":straitjacketCheck")
+        .buildsSuccessfully()
+        .taskSucceeded(":straitjacketCheckLibs")
+        .taskSkipped(":straitjacketCheckSomeOtherLibs")
+        .taskSucceeded(":straitjacketCheck")
+    }
 }
