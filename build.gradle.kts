@@ -57,7 +57,7 @@ tasks.validatePlugins {
 }
 
 kotlin {
-  abiValidation { enabled = true }
+  abiValidation()
 
   compilerOptions {
     allWarningsAsErrors = true
