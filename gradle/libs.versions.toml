@@ -10,7 +10,7 @@ junit-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 ktfmt = { module = "com.facebook:ktfmt", version = "0.63" } # only used in ktfmt.sh
 
 [plugins]
-buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.9" }
+buildconfig = { id = "com.github.gmazzo.buildconfig", version = "6.0.10" }
 blueprint-core = { id = "dev.jonpoulton.blueprint", version.ref = "blueprint" }
 blueprint-test = { id = "dev.jonpoulton.blueprint.test", version.ref = "blueprint" }
 detekt = { id = "dev.detekt", version = "2.0.0-alpha.3" }
