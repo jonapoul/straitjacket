@@ -1,5 +1,5 @@
 [versions]
-blueprint = "2.1.0"
+blueprint = "2.2.0"
 junit = "6.1.0"
 
 [libraries]
