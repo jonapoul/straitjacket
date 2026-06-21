@@ -4,7 +4,6 @@ import app.cash.licensee.UnusedAction.IGNORE
 import blueprint.core.javaVersion
 import blueprint.core.jvmTarget
 import dev.detekt.gradle.Detekt
-import dev.detekt.gradle.report.ReportMergeTask
 import org.gradle.api.attributes.plugin.GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
@@ -90,19 +89,10 @@ detekt {
 val detektTasks = tasks.withType(Detekt::class)
 val detektCheck by tasks.registering { dependsOn(detektTasks) }
 
-val detektReportMergeSarif =
-  tasks.register("detektReportMergeSarif", ReportMergeTask::class) {
-    output = layout.buildDirectory.file("reports/detekt/merge.sarif.json")
-  }
-
-detektReportMergeSarif.configure { input.from(detektTasks.map { it.reports.sarif.outputLocation }) }
-
-tasks.check.configure { dependsOn(detektReportMergeSarif) }
-
 detektTasks.configureEach {
   reports {
     html.required = true
-    sarif.required = true
+    sarif.required = false
     checkstyle.required = false
     markdown.required = false
   }
@@ -110,8 +100,6 @@ detektTasks.configureEach {
   exclude { node ->
     !node.isDirectory && node.file.absolutePath.contains("generated", ignoreCase = true)
   }
-
-  finalizedBy(detektReportMergeSarif)
 }
 
 configurations.named("apiElements") {

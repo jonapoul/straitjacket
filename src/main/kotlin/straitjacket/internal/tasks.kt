@@ -10,7 +10,6 @@ import org.gradle.internal.extensions.stdlib.capitalized
 import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
 import straitjacket.StraitjacketCheck
 
-/** Aggregate task that depends on all per-catalog check tasks. */
 internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): TaskProvider<*> =
   tasks.register("straitjacketCheck") { t ->
     t.group = VERIFICATION_GROUP
@@ -18,7 +17,6 @@ internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): Tas
     t.onlyIf { enabled.get() }
   }
 
-/** Per-catalog check task, e.g. straitjacketCheckLibs. */
 internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
   versionCatalog: Provider<VersionCatalog>,
@@ -51,11 +49,6 @@ private fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String>
   return map
 }
 
-/**
- * Builds a map of group:name -> [highestResolvedVersion, config1, config2, ...] across all
- * resolvable configurations. Tracks the highest resolved version per dependency (for comparison
- * against the catalog) and which configurations resolved it (for reporting).
- */
 private fun buildResolvedVersionMap(
   matchingConfigs: NamedDomainObjectSet<Configuration>
 ): Map<String, List<String>> {

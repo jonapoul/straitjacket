@@ -1,34 +1,18 @@
 package straitjacket.internal
 
-/**
- * A comparable version string following SemVer precedence rules.
- *
- * The value is split into a main version and an optional pre-release identifier at the first "-"
- * (e.g. "1.0.0-alpha.1" -> main "1.0.0", pre-release "alpha.1"):
- * - Main versions are compared by their dot-separated numeric segments, with missing segments
- *   treated as 0 (so "1.2" == "1.2.0"). Non-numeric main segments are also treated as 0.
- * - A pre-release version has lower precedence than the matching release ("1.0.0-alpha" < "1.0.0").
- * - Pre-release identifiers are compared field-by-field: numeric fields compare numerically,
- *   numeric fields rank below non-numeric fields, non-numeric fields compare lexicographically, and
- *   a larger set of fields wins when all shared fields are equal ("alpha.1" > "alpha").
- *
- * Build metadata ("+...") is not stripped and may compare incorrectly.
- */
 @JvmInline
 internal value class Version(val value: String) : Comparable<Version> {
+  override fun toString(): String = value
 
   override fun compareTo(other: Version): Int {
-    // 1. Separate the main version from the pre-release identifier
-    // "1.0.0-alpha.1" -> main = "1.0.0", preRelease = "alpha.1"
     val (mainA, preA) = splitVersionAndPreRelease(this.value)
     val (mainB, preB) = splitVersionAndPreRelease(other.value)
 
-    // 2. Compare the main numeric components (Major.Minor.Patch)
     val mainCmp = compareNumericParts(mainA, mainB)
     if (mainCmp != 0) return mainCmp
 
-    // 3. If main versions are equal, handle SemVer Pre-release precedence
     return when {
+      // If main versions are equal, handle SemVer Pre-release precedence
       preA == null && preB == null -> 0
 
       // Pre-release is LESS than normal release (e.g., 1.0.0-alpha < 1.0.0)
@@ -97,6 +81,4 @@ internal value class Version(val value: String) : Comparable<Version> {
     // e.g., 1.0.0-alpha.1 > 1.0.0-alpha
     return partsA.size.compareTo(partsB.size)
   }
-
-  override fun toString(): String = value
 }
