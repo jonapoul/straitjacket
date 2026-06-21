@@ -87,10 +87,11 @@ detekt {
 }
 
 val detektTasks = tasks.withType(Detekt::class)
-val detektCheck = tasks.register("detektCheck") {
-  group = LifecycleBasePlugin.VERIFICATION_GROUP
-  dependsOn(detektTasks)
-}
+val detektCheck =
+  tasks.register("detektCheck") {
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn(detektTasks)
+  }
 
 detektTasks.configureEach {
   reports {
