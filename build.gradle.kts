@@ -92,7 +92,7 @@ val detektCheck by tasks.registering { dependsOn(detektTasks) }
 detektTasks.configureEach {
   reports {
     html.required = true
-    sarif.required = true
+    sarif.required = false
     checkstyle.required = false
     markdown.required = false
   }
