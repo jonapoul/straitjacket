@@ -45,6 +45,15 @@ public class StraitjacketPlugin : Plugin<Project> {
           .value(extension.ignoredModules.convention(emptySet()).map(::GlobSet))
       ignoredModules.finalizeValueOnRead()
 
+      // A plain provider chain, unlike enabled: only the check tasks read this, once each at
+      // execution time, so there is no resolution hot path to memoise it for
+      val failOnViolation =
+        providers
+          .gradleProperty("straitjacket.failOnViolation")
+          .map(String::toBooleanStrictOrNull)
+          .orElse(extension.failOnViolation)
+          .orElse(true)
+
       val versionCatalogs = extensions.getByType(VersionCatalogsExtension::class.java)
 
       val resolvableConfigs = configurations.matching(Configuration::isCanBeResolved)
@@ -107,6 +116,7 @@ public class StraitjacketPlugin : Plugin<Project> {
             authoritativeVersions = authoritativeVersions,
             resolvedVersions = resolvedVersions,
             ignoredModules = extension.ignoredModules,
+            failOnViolation = failOnViolation,
             active = active,
           )
         aggregateCheck.configure { it.dependsOn(perCatalogCheck) }

@@ -109,6 +109,10 @@ straitjacket {
   // Set to false to turn off both the forcing and the checks. Defaults to true.
   enabled = true
 
+  // Set to false to have the checks log their report and succeed, rather than fail the
+  // build. Defaults to true.
+  failOnViolation = true
+
   // Exclude configurations (by name) from both forcing and checking.
   ignoredConfigurations.add("someConfiguration")
 
@@ -126,13 +130,16 @@ straitjacket {
 
 `ignoredModules` is usually the one you want when a single dependency is the problem. If a transitive drags `com.website:bar` above the catalog and you can't fix it today, ignoring the configuration it turned up in gives up on every other module that configuration resolves too. An ignored module is one Straitjacket stops managing altogether, so it isn't forced up either and resolves exactly as it would without the plugin. Everything outside a `*` is matched literally, so the dots in a group name aren't wildcards.
 
-You can also flip it on or off with the `straitjacket.enabled` Gradle property. It wins over the `enabled` extension value, so you can skip a one-off build without touching the build script:
+`failOnViolation = false` is for adopting Straitjacket on a project that isn't clean yet, where failing on day one isn't an option but the drift still wants watching. The check tasks log the same report at `WARN` and succeed. Note that a task which succeeds is up to date on the next build and doesn't log its warning again, so treat the report file as the record. It's written either way, and the warning says where it is.
+
+Both `enabled` and `failOnViolation` can also be set with a Gradle property, `straitjacket.enabled` and `straitjacket.failOnViolation`. Each wins over its extension value, so you can change either for a one-off build without touching the build script:
 
 ```
 ./gradlew build -Pstraitjacket.enabled=false
+./gradlew check -Pstraitjacket.failOnViolation=false
 ```
 
-Put it in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
+Put them in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
 
 ### Notes
 
