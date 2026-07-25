@@ -10,19 +10,22 @@ import org.gradle.internal.component.external.model.DefaultModuleComponentSelect
  * Forces this dependency up to the version [catalogName] declares for it, if that is higher than
  * the version it is currently headed for.
  *
- * Project dependencies are left alone. Substituting a version for one swaps the project out for a
- * module that only exists once published.
+ * Modules matching [ignoredModules] are left alone, as are project dependencies. Substituting a
+ * version for a project swaps it out for a module that only exists once published.
  */
 internal fun DependencySubstitution.applyRestriction(
   catalogName: String,
   catalogVersions: Map<String, String>,
+  ignoredModules: GlobSet,
 ) {
   val target = currentTarget() as? ModuleComponentSelector ?: return
 
   val group = target.group
   val name = target.module
+  val coordinate = "$group:$name"
+  if (coordinate in ignoredModules) return
 
-  val catalogVersion = catalogVersions["$group:$name"] ?: return
+  val catalogVersion = catalogVersions[coordinate] ?: return
   val targetVersion = target.version
 
   if (Version(targetVersion) < Version(catalogVersion)) {

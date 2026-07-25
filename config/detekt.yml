@@ -2,6 +2,8 @@
 complexity:
   LabeledExpression:
     active: false
+  LongParameterList:
+    allowedFunctionParameters: 6
 
 comments:
   active: false
@@ -13,7 +15,11 @@ naming:
     allowSingleTypedGenerics: true
 
 style:
+  LoopWithTooManyJumpStatements:
+    maxJumpCount: 2
   MultilineRawStringIndentation:
     active: false
   RedundantVisibilityModifier:
     active: false
+  ReturnCount:
+    max: 3

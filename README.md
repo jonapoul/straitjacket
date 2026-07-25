@@ -97,7 +97,7 @@ Straitjacket found dependencies resolved to versions newer than the version cata
 
   com.website:bar:2.3.4 -> 2.5.0 (in compileClasspath, runtimeClasspath)
 
-Update your version catalog or add these configurations to ignoredConfigurations.
+Update your version catalog, or exclude them with ignoredModules or ignoredConfigurations.
 ```
 
 ### Configuration
@@ -112,11 +112,19 @@ straitjacket {
   // Exclude configurations (by name) from both forcing and checking.
   ignoredConfigurations.add("someConfiguration")
 
+  // Exclude individual modules from both forcing and checking. "*" matches any run of
+  // characters, so this covers one module, a whole group, or a name in any group.
+  ignoredModules.add("com.website:bar")
+  ignoredModules.add("com.website:*")
+  ignoredModules.add("*:bar")
+
   // Exclude whole catalogs when more than one is registered. The name is the catalog's
   // accessor name, e.g. "someOtherLibs" for a "someOtherLibs.versions.toml" file.
   ignoredCatalogs.add("someOtherLibs")
 }
 ```
+
+`ignoredModules` is usually the one you want when a single dependency is the problem. If a transitive drags `com.website:bar` above the catalog and you can't fix it today, ignoring the configuration it turned up in gives up on every other module that configuration resolves too. An ignored module is one Straitjacket stops managing altogether, so it isn't forced up either and resolves exactly as it would without the plugin. Everything outside a `*` is matched literally, so the dots in a group name aren't wildcards.
 
 You can also flip it on or off with the `straitjacket.enabled` Gradle property. It wins over the `enabled` extension value, so you can skip a one-off build without touching the build script:
 

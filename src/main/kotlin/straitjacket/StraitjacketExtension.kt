@@ -21,6 +21,24 @@ public interface StraitjacketExtension {
   public val ignoredConfigurations: SetProperty<String>
 
   /**
+   * Excludes the given modules from both halves of Straitjacket: they are neither forced up to
+   * their catalog version nor reported by the check tasks, whichever configuration they turn up in.
+   *
+   * Each entry is a `"$group:$name"` coordinate, in which `*` stands for any run of characters:
+   * ```kotlin
+   * straitjacket {
+   *   ignoredModules.add("com.website:bar")   // one module
+   *   ignoredModules.add("com.website:*")     // every module in a group
+   *   ignoredModules.add("*:bar")             // every module with that name, whatever its group
+   * }
+   * ```
+   *
+   * Use this rather than [ignoredConfigurations] when one dependency is the problem. Ignoring a
+   * configuration gives up on every other module it resolves too.
+   */
+  public val ignoredModules: SetProperty<String>
+
+  /**
    * If you have multiple catalog files registered, use this property to exclude any subset of them.
    *
    * E.g. if you have a file called "someOtherLibs.versions.toml":
