@@ -1,5 +1,7 @@
 package straitjacket.internal
 
+import org.gradle.api.NamedDomainObjectSet
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.DependencySubstitution
 import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.internal.artifacts.DependencySubstitutionInternal
@@ -8,6 +10,43 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
 import org.gradle.internal.component.external.model.DefaultModuleComponentSelector
+
+/**
+ * Registers the rule that forces the dependencies of every configuration in [resolvableConfigs] up
+ * to the version [catalogName] declares for them.
+ *
+ * [settings] is read into locals here rather than inside the rule, which the configuration cache
+ * serializes and which must therefore capture nothing beyond plain values and providers.
+ */
+internal fun forceCatalogVersions(
+  resolvableConfigs: NamedDomainObjectSet<Configuration>,
+  catalogName: String,
+  catalogVersions: Map<String, String>,
+  active: Provider<Boolean>,
+  settings: StraitjacketSettings,
+) {
+  val ignoredConfigurations = settings.ignoredConfigurations
+  val ignoredModules = settings.ignoredModuleGlobs
+  val logForcedVersions = settings.logForcedVersions
+
+  resolvableConfigs.configureEach { configuration ->
+    // The name, not the Configuration, so the rule stays configuration cache friendly
+    val configurationName = configuration.name
+    // A substitution rule rather than eachDependency, which reports coordinates only: a project
+    // dependency reports the target project's own, so there is no telling it from a module.
+    configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
+      if (active.get() && configurationName !in ignoredConfigurations.get()) {
+        substitution.applyRestriction(
+          catalogName = catalogName,
+          configurationName = configurationName,
+          catalogVersions = catalogVersions,
+          ignoredModules = ignoredModules.get(),
+          logForcedVersions = logForcedVersions,
+        )
+      }
+    }
+  }
+}
 
 /**
  * Forces this dependency up to the version [catalogName] declares for it, if that is higher than
@@ -19,7 +58,7 @@ import org.gradle.internal.component.external.model.DefaultModuleComponentSelect
  * [logForcedVersions] is only read once a force is going ahead, so a build that leaves it unset
  * pays nothing for it on a path that runs once per dependency per catalog per resolution.
  */
-internal fun DependencySubstitution.applyRestriction(
+private fun DependencySubstitution.applyRestriction(
   catalogName: String,
   configurationName: String,
   catalogVersions: Map<String, String>,
