@@ -15,3 +15,6 @@ internal fun FileTree.Builder.buildGradleKts(@Language("kotlin") contents: Strin
 
 internal fun FileTree.Builder.libsVersionsToml(@Language("toml") contents: String) =
   ("gradle" / "libs.versions.toml")(contents)
+
+internal fun FileTree.Builder.gradleProperties(@Language("properties") contents: String) =
+  "gradle.properties"(contents)
