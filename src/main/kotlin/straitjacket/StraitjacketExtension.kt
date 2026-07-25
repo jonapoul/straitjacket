@@ -14,8 +14,9 @@ public interface StraitjacketExtension {
   public val enabled: Property<Boolean>
 
   /**
-   * Excludes the given [org.gradle.api.artifacts.Configuration] names from consideration when
-   * checking dependencies.
+   * Excludes the given [org.gradle.api.artifacts.Configuration] names from both halves of
+   * Straitjacket: dependencies resolved by those configurations are neither forced up to their
+   * catalog version nor reported by the check tasks.
    */
   public val ignoredConfigurations: SetProperty<String>
 

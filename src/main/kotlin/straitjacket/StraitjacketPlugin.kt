@@ -33,12 +33,12 @@ public class StraitjacketPlugin : Plugin<Project> {
       enabled.finalizeValueOnRead()
 
       val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
-      val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
+      ignoredConfigurations.finalizeValueOnRead()
 
       val versionCatalogs = extensions.getByType(VersionCatalogsExtension::class.java)
-      val matchingConfigs = configurations.matching { c ->
-        c.shouldBeConstrained(ignoredConfigurations)
-      }
+
+      val resolvableConfigs = configurations.matching(Configuration::isCanBeResolved)
+      val checkedConfigs = configurations.matching { c -> c.shouldBeChecked(ignoredConfigurations) }
 
       val aggregateCheck = registerAggregateCheckTask(enabled)
 
@@ -54,11 +54,12 @@ public class StraitjacketPlugin : Plugin<Project> {
         }
 
       // Shared by every per-catalog check task, so the resolution graph is only walked once
-      val resolvedVersions = resolvedVersions(matchingConfigs)
+      val resolvedVersions = resolvedVersions(checkedConfigs)
 
       // Which catalog wins a module declared by several of them. Stays a provider because
       // ignoredCatalogs is only final once the build script has configured the extension, and an
       // ignored catalog must not contribute a version.
+      val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
       val authoritativeVersions = ignoredCatalogs.map { ignored ->
         buildAuthoritativeVersionMap(versionsByCatalog.filterKeys { it !in ignored })
       }
@@ -76,9 +77,11 @@ public class StraitjacketPlugin : Plugin<Project> {
             )
         active.finalizeValueOnRead()
 
-        matchingConfigs.configureEach { configuration ->
+        resolvableConfigs.configureEach { configuration ->
+          // The name, not the Configuration, so the rule stays configuration cache friendly
+          val configurationName = configuration.name
           configuration.resolutionStrategy.eachDependency { details ->
-            if (active.get()) {
+            if (active.get() && configurationName !in ignoredConfigurations.get()) {
               details.applyRestriction(catalogName, catalogVersions)
             }
           }
@@ -96,7 +99,6 @@ public class StraitjacketPlugin : Plugin<Project> {
       }
     }
 
-  private fun Configuration.shouldBeConstrained(
-    ignoredConfigurations: SetProperty<String>
-  ): Boolean = isCanBeResolved && name !in ignoredConfigurations.get()
+  private fun Configuration.shouldBeChecked(ignoredConfigurations: SetProperty<String>): Boolean =
+    isCanBeResolved && name !in ignoredConfigurations.get()
 }
