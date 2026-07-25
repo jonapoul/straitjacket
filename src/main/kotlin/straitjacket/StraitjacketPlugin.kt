@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.SetProperty
 import straitjacket.internal.applyRestriction
+import straitjacket.internal.buildCatalogVersionMap
 import straitjacket.internal.registerAggregateCheckTask
 import straitjacket.internal.registerPerCatalogCheckTask
 
@@ -36,14 +37,16 @@ public class StraitjacketPlugin : Plugin<Project> {
 
       // Register resolution strategy and check task for every available catalog.
       versionCatalogs.catalogNames.forEach { catalogName ->
-        val versionCatalog = versionCatalogs.named(catalogName)
+        // Built once so that forcing and checking can never disagree about what the catalog
+        // declares. See buildCatalogVersionMap for how duplicate aliases are resolved.
+        val catalogVersions = buildCatalogVersionMap(versionCatalogs.named(catalogName))
         val isIgnored = ignoredCatalogs.map { ignored -> catalogName in ignored }
         val active = enabled.zip(isIgnored) { isEnabled, ignored -> isEnabled && !ignored }
 
         matchingConfigs.configureEach { configuration ->
           configuration.resolutionStrategy.eachDependency { details ->
             if (active.get()) {
-              details.applyRestriction(versionCatalog)
+              details.applyRestriction(catalogName, catalogVersions)
             }
           }
         }
@@ -51,7 +54,7 @@ public class StraitjacketPlugin : Plugin<Project> {
         val perCatalogCheck =
           registerPerCatalogCheckTask(
             catalogName = catalogName,
-            versionCatalog = provider { versionCatalog },
+            catalogVersions = catalogVersions,
             matchingConfigs = matchingConfigs,
             active = active,
           )

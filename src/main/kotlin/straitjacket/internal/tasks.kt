@@ -3,7 +3,6 @@ package straitjacket.internal
 import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.VersionCatalog
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.extensions.stdlib.capitalized
@@ -19,7 +18,7 @@ internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): Tas
 
 internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
-  versionCatalog: Provider<VersionCatalog>,
+  catalogVersions: Map<String, String>,
   matchingConfigs: NamedDomainObjectSet<Configuration>,
   active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
@@ -28,25 +27,11 @@ internal fun Project.registerPerCatalogCheckTask(
     t.group = VERIFICATION_GROUP
     t.description =
       "Check that no resolved dependencies are newer than declared in the '$catalogName' version catalog."
-    t.catalogVersions.set(versionCatalog.map(::buildCatalogVersionMap))
+    t.catalogVersions.set(catalogVersions)
     t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
     t.onlyIf { active.get() }
   }
-}
-
-private fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String> {
-  val map = mutableMapOf<String, String>()
-  for (alias in catalog.libraryAliases) {
-    val lib = catalog.findLibrary(alias).orElse(null)?.get()
-    lib?.apply {
-      val version = versionConstraint.requiredVersion
-      if (version.isNotEmpty()) {
-        map["${module.group}:${module.name}"] = version
-      }
-    }
-  }
-  return map
 }
 
 private fun buildResolvedVersionMap(
