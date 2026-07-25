@@ -44,7 +44,9 @@ class TransitiveScenario : StraitjacketScenarioTest() {
     runScenario {
       assertThatTask(":straitjacketCheck")
         .failsBuild()
-        .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")
-        .trimmedOutputContains("com.squareup.okio:okio:3.0.0 -> 3.6.0")
+        .trimmedOutputContains(
+          "> Task :straitjacketCheckLibs FAILED",
+          "com.squareup.okio:okio:3.0.0 -> 3.6.0",
+        )
     }
 }

@@ -11,6 +11,9 @@ internal fun Assert<BuildResult>.trimmedOutputContains(expected: String) = trans
   result
 }
 
+internal fun Assert<BuildResult>.trimmedOutputContains(vararg expected: String): Assert<BuildResult> =
+  expected.fold(this) { assertion, value -> assertion.trimmedOutputContains(value) }
+
 internal fun Assert<GradleRunner>.plusArguments(vararg args: String): Assert<GradleRunner> =
   transform { runner ->
     runner.withArguments(runner.arguments + args)

@@ -57,8 +57,8 @@ class CheckScenario : StraitjacketScenarioTest() {
   fun `a directly requested newer version fails the check`() = runScenario {
     assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4")
       .failsBuild()
-      .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")
       .trimmedOutputContains(
+        "> Task :straitjacketCheckLibs FAILED",
         """
         FAILURE: Build failed with an exception.
 
@@ -70,7 +70,7 @@ class CheckScenario : StraitjacketScenarioTest() {
 
           Update your version catalog or add these configurations to ignoredConfigurations.
         """
-          .trimIndent()
+          .trimIndent(),
       )
   }
 
