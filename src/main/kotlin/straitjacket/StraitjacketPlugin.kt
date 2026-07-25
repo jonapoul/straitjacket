@@ -10,6 +10,7 @@ import straitjacket.internal.buildAuthoritativeVersionMap
 import straitjacket.internal.buildCatalogVersionMap
 import straitjacket.internal.registerAggregateCheckTask
 import straitjacket.internal.registerPerCatalogCheckTask
+import straitjacket.internal.resolvedVersions
 
 public class StraitjacketPlugin : Plugin<Project> {
   override fun apply(target: Project): Unit =
@@ -52,6 +53,9 @@ public class StraitjacketPlugin : Plugin<Project> {
           buildCatalogVersionMap(versionCatalogs.named(catalogName))
         }
 
+      // Shared by every per-catalog check task, so the resolution graph is only walked once
+      val resolvedVersions = resolvedVersions(matchingConfigs)
+
       // Which catalog wins a module declared by several of them. Stays a provider because
       // ignoredCatalogs is only final once the build script has configured the extension, and an
       // ignored catalog must not contribute a version.
@@ -85,7 +89,7 @@ public class StraitjacketPlugin : Plugin<Project> {
             catalogName = catalogName,
             catalogVersions = catalogVersions,
             authoritativeVersions = authoritativeVersions,
-            matchingConfigs = matchingConfigs,
+            resolvedVersions = resolvedVersions,
             active = active,
           )
         aggregateCheck.configure { it.dependsOn(perCatalogCheck) }

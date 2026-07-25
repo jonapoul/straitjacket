@@ -20,7 +20,7 @@ internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
   catalogVersions: Map<String, String>,
   authoritativeVersions: Provider<Map<String, List<String>>>,
-  matchingConfigs: NamedDomainObjectSet<Configuration>,
+  resolvedVersions: Provider<Map<String, Map<String, List<String>>>>,
   active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
   val taskName = "straitjacketCheck${catalogName.capitalized()}"
@@ -30,10 +30,23 @@ internal fun Project.registerPerCatalogCheckTask(
       "Check that no resolved dependencies are newer than declared in the '$catalogName' version catalog."
     t.catalogVersions.set(catalogVersions)
     t.authoritativeVersions.set(authoritativeVersions)
-    t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
+    t.resolvedVersions.set(resolvedVersions)
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
     t.onlyIf { active.get() }
   }
+}
+
+/**
+ * Every per-catalog check task judges the same resolved graph, so the walk happens once for
+ * whichever task asks first and the rest reuse the answer. Gradle does not memoise a provider, and
+ * a walk visits every resolvable configuration in the project, so without the [lazy] the cost is
+ * paid once per catalog.
+ */
+internal fun Project.resolvedVersions(
+  matchingConfigs: NamedDomainObjectSet<Configuration>
+): Provider<Map<String, Map<String, List<String>>>> {
+  val resolved = lazy { buildResolvedVersionMap(matchingConfigs) }
+  return provider { resolved.value }
 }
 
 /**
