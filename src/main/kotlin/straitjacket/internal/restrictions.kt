@@ -44,7 +44,7 @@ internal fun DependencySubstitution.applyRestriction(
         "than $targetVersion",
     )
 
-    // No level set is what silence is
+    // Throws if the Gradle property named no level. Having no level at all is what silence is
     val level = logForcedVersions.orNull
     if (level != null) {
       // One line per configuration that resolved it, so a module forced in four classpaths says so

@@ -158,7 +158,7 @@ The logging happens during resolution, so a build that resolves nothing, having 
 ./gradlew build -Pstraitjacket.logForcedVersions=info
 ```
 
-A level name is matched without regard to case. A value that names no level, or that isn't `true` or `false` for the two boolean ones, fails the build when it's read rather than quietly falling back to the extension value, so a typo can't leave the build doing the opposite of what you asked for.
+A level name is matched without regard to case. A value that names no level, or that isn't `true` or `false` for the two boolean ones, fails the build rather than quietly falling back to the extension value, so a typo can't leave the build doing the opposite of what you asked for. Each is checked when it's read, and `logForcedVersions` is only read while forcing, so a build that resolves nothing at all is the one that won't tell you.
 
 Put them in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
 

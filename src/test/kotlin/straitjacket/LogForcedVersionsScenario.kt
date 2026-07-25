@@ -157,13 +157,14 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
 
   /**
    * Falling back would leave the extension's level in place and hide the typo. The level is only
-   * read while forcing, so this needs a task that resolves a configuration: `compileKotlin` does,
-   * where `straitjacketCheck` only walks the resolution result.
+   * read from inside the substitution rule, and `straitjacketCheck` walks the resolution result
+   * without ever asking for artifacts, so this is the case that goes quiet if the throw is anything
+   * Gradle can catch. See strictProperty for why it is an Error.
    */
   @Test
   fun `a property that names no level fails the build`() = runScenario {
     listOf("", "not-a-level", "true", "verbose").forEach { property ->
-      assertThatTask(":compileKotlin", "-Plevel=LIFECYCLE", "--rerun-tasks")
+      assertThatTask(":straitjacketCheck", "-Plevel=LIFECYCLE", "--rerun-tasks")
         .withGradleProperty(name = "straitjacket.logForcedVersions", value = property)
         .failsBuild()
         .trimmedOutputContains(
