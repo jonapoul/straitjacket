@@ -46,10 +46,17 @@ internal fun Project.registerPerCatalogCheckTask(
  * whichever task asks first and the rest reuse the answer. Gradle does not memoise a provider, and
  * a walk visits every resolvable configuration in the project, so without the [lazy] the cost is
  * paid once per catalog.
+ *
+ * Unlike the forcing side, this can match on [ignoredConfigurations] as well as on
+ * `isCanBeResolved`, because the collection is only iterated at execution time, by when the build
+ * script has configured the extension.
  */
 internal fun Project.resolvedVersions(
-  checkedConfigs: NamedDomainObjectSet<Configuration>
+  ignoredConfigurations: Provider<GlobSet>
 ): Provider<Map<String, Map<String, List<String>>>> {
+  val checkedConfigs = configurations.matching { c ->
+    c.isCanBeResolved && c.name !in ignoredConfigurations.get()
+  }
   val resolved = lazy { buildResolvedVersionMap(checkedConfigs) }
   return provider { resolved.value }
 }
