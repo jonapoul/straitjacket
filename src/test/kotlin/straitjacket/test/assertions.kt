@@ -2,6 +2,8 @@ package straitjacket.test
 
 import assertk.Assert
 import assertk.assertions.contains
+import blueprint.test.taskSkipped
+import kotlin.DeprecationLevel.ERROR
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 
@@ -16,15 +18,10 @@ internal fun Assert<BuildResult>.trimmedOutputContains(
 ): Assert<BuildResult> =
   expected.fold(this) { assertion, value -> assertion.trimmedOutputContains(value) }
 
-// A no-arg call would silently assert nothing, so make it a compile error. This overload is more
-// specific than the vararg one, so it wins resolution and reports the error.
-@Deprecated(
-  "trimmedOutputContains needs at least one expected string",
-  level = DeprecationLevel.ERROR,
-)
-@Suppress("unused")
+@Deprecated("trimmedOutputContains needs at least one expected string", level = ERROR)
+@Suppress("unused", "UnusedReceiverParameter")
 internal fun Assert<BuildResult>.trimmedOutputContains(): Assert<BuildResult> =
-  throw UnsupportedOperationException("trimmedOutputContains needs at least one expected string")
+  throw UnsupportedOperationException("trimmedOutputContains needs at least one string")
 
 internal fun Assert<GradleRunner>.plusArguments(vararg args: String): Assert<GradleRunner> =
   transform { runner ->
@@ -38,3 +35,11 @@ internal fun Assert<GradleRunner>.withGradleProperty(
   name: String,
   value: Any,
 ): Assert<GradleRunner> = plusArguments("-P$name=$value")
+
+fun Assert<BuildResult>.tasksSkipped(vararg names: String): Assert<BuildResult> =
+  names.fold(this) { assertion, name -> assertion.taskSkipped(name) }
+
+@Deprecated("tasksSkipped needs at least one expected string", level = ERROR)
+@Suppress("unused", "UnusedReceiverParameter")
+fun Assert<BuildResult>.tasksSkipped(): Assert<BuildResult> =
+  throw UnsupportedOperationException("tasksSkipped needs at least one string")

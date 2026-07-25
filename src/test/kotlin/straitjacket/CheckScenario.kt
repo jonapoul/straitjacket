@@ -3,13 +3,13 @@ package straitjacket
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
-import blueprint.test.taskSkipped
 import blueprint.test.taskSucceeded
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.buildGradleKts
 import straitjacket.test.libsVersionsToml
 import straitjacket.test.settingsGradleKts
+import straitjacket.test.tasksSkipped
 import straitjacket.test.trimmedOutputContains
 
 class CheckScenario : StraitjacketScenarioTest() {
@@ -78,7 +78,6 @@ class CheckScenario : StraitjacketScenarioTest() {
   fun `disabling the plugin skips the checks even for a newer version`() = runScenario {
     assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4", "-PstraitjacketEnabled=false")
       .buildsSuccessfully()
-      .taskSkipped(":straitjacketCheckLibs")
-      .taskSkipped(":straitjacketCheck")
+      .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 }
