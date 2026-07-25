@@ -137,18 +137,21 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
   }
 
   /**
-   * The extension says not to fail, so every one of these has to leave it at a warning. Nothing
-   * about the task's inputs changes between iterations, so without `--rerun-tasks` the task would
-   * be up to date from the second one on and the assertion would pass without running anything.
+   * The extension says not to fail, so a value that fell back would leave every one of these at a
+   * warning and hide the typo. Nothing about the task's inputs changes between iterations, so
+   * without `--rerun-tasks` the task would be up to date from the second one on and the assertion
+   * would pass without running anything.
    */
   @Test
-  fun `a non-boolean string for the property falls back to the extension`() = runScenario {
+  fun `a non-boolean string for the property fails the build`() = runScenario {
     listOf("", "not-a-bool", "1", "TRUE", " false").forEach { property ->
       assertThatTask(":straitjacketCheck", "-Pfail=false", "--rerun-tasks")
         .withGradleProperty(name = "straitjacket.failOnViolation", value = property)
-        .buildsSuccessfully()
-        .taskSucceeded(":straitjacketCheckLibs")
-        .trimmedOutputContains("Not failing the build because failOnViolation is off.")
+        .failsBuild()
+        .trimmedOutputContains(
+          "Gradle property 'straitjacket.failOnViolation' is set to '$property', " +
+            "which is not a boolean (true or false)."
+        )
     }
   }
 }
