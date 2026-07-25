@@ -26,3 +26,30 @@ internal fun buildCatalogVersionMap(catalog: VersionCatalog): Map<String, String
   }
   return map
 }
+
+/**
+ * Merges the per-catalog maps built by [buildCatalogVersionMap], keyed by catalog name, into one
+ * map of `"$group:$name"` to `[highestDeclaredVersion, declaringCatalogName]`.
+ *
+ * A module can be declared by more than one catalog at different versions, and the forcing side
+ * settles that the same way it settles duplicate aliases, by taking the highest. The check tasks
+ * read this map so that no catalog reports a violation for a version another catalog in the same
+ * build declares, which would be Straitjacket failing the build on a bump it performed itself.
+ *
+ * Callers must leave ignored catalogs out of [catalogVersions]: a catalog Straitjacket is not
+ * enforcing does not get to make a version authoritative for the catalogs it is.
+ */
+internal fun buildAuthoritativeVersionMap(
+  catalogVersions: Map<String, Map<String, String>>
+): Map<String, List<String>> {
+  val map = mutableMapOf<String, List<String>>()
+  for ((catalogName, versions) in catalogVersions) {
+    for ((coordinate, version) in versions) {
+      val existing = map[coordinate]?.first()
+      if (existing == null || Version(version) > Version(existing)) {
+        map[coordinate] = listOf(version, catalogName)
+      }
+    }
+  }
+  return map
+}

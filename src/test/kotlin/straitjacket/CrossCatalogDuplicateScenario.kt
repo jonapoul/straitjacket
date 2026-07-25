@@ -3,129 +3,37 @@ package straitjacket
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
+import blueprint.test.failsBuild
 import blueprint.test.outputContains
+import blueprint.test.outputDoesNotContain
 import blueprint.test.taskSucceeded
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.buildGradleKts
 import straitjacket.test.libsVersionsToml
 import straitjacket.test.settingsGradleKts
+import straitjacket.test.trimmedOutputContains
 import straitjacket.test.withoutConfigurationCache
 
 /**
- * FAILING TEST - documents a known bug, not yet fixed.
+ * Two catalogs can declare the same module at different versions. Straitjacket registers a
+ * resolution rule and a check task per catalog, so both sides have to agree on which declared
+ * version wins, and the answer must not depend on the order the catalogs were registered in. The
+ * cross-catalog twin of [DuplicateAliasScenario], settled the same way: the highest wins.
  *
- * ## The bug
+ * Registration order used to decide it instead, breaking in opposite directions:
+ * - Later catalog declares higher: it won the forcing, then the earlier catalog's check failed the
+ *   build against its own lower declaration, telling you to update a catalog to a version another
+ *   catalog already declared.
+ * - Later catalog declares lower: it pulled the version back down and every check passed silently,
+ *   since a check only reports resolved versions above its catalog and never below.
  *
- * When two version catalogs declare the same module at different versions, Straitjacket forces the
- * version declared by whichever catalog was registered *last*, but every catalog still checks the
- * resolved version against its own declaration. The two sides therefore disagree, and the build can
- * fail on the exact version Straitjacket itself forced.
+ * `libs` declares 3.6.0; `someOtherLibs` is registered afterwards and takes its version from the
+ * `otherOkioVersion` property, so one fixture covers both orderings. The requested version defaults
+ * below both, so the forcing side is guaranteed to act.
  *
- * This is the cross-catalog twin of the duplicate-alias bug (a module declared under two aliases
- * *within* one catalog). Fixing that one does not fix this one - see "Relationship to the other
- * known bugs" below.
- *
- * ## Where
- *
- * `StraitjacketPlugin.apply` loops over `versionCatalogs.catalogNames` and, for each catalog
- * independently, registers both
- * - a `resolutionStrategy.eachDependency` rule that calls `applyRestriction` for that catalog, and
- * - a `straitjacketCheck<CatalogName>` task that checks against that catalog.
- *
- * Nothing reconciles the catalogs with each other. `applyRestriction` in `internal/restrictions.kt`
- * compares `requested.version` against its own catalog's version, and `requested` always reports
- * the version the build originally asked for - never the value a previously-registered catalog's
- * rule already set via `useVersion`. So each catalog's rule decides in isolation from the same
- * starting point, and the last rule to run is the one whose version sticks. It can therefore pull
- * the version back *down* relative to what an earlier catalog's rule chose (though never below the
- * version the build originally requested).
- *
- * Meanwhile `buildCatalogVersionMap` and `StraitjacketCheck.execute` give every catalog its own
- * check task, each comparing the single resolved version against its own declaration. Any catalog
- * declaring something lower than the version that won the forcing reports a violation.
- *
- * ## This scenario
- *
- * Two catalogs declare okio at different versions, and the build requests 3.0.0, which is below
- * both, so the forcing side is guaranteed to act:
- * - `libs` (from `gradle/libs.versions.toml`) declares 3.6.0
- * - `someOtherLibs` (registered afterwards in `settings.gradle.kts`) declares 3.16.0
- *
- * `someOtherLibs` is registered last, so 3.16.0 wins the forcing. `:straitjacketCheckSomeOtherLibs`
- * is happy with that. `:straitjacketCheckLibs` is not: it compares the resolved 3.16.0 against
- * `libs`' 3.6.0, finds resolved is newer, and fails the build.
- *
- * ## Expected vs actual
- *
- * `the check passes ...` is the failing test. Both check tasks should succeed: 3.16.0 is declared
- * by a catalog in this build, so no catalog should be reporting it as a violation. What actually
- * happens today is:
- * ```
- * > Task :straitjacketCheckSomeOtherLibs
- * > Task :straitjacketCheckLibs FAILED
- *
- * > Straitjacket found dependencies resolved to versions newer than the version catalog declares:
- *
- *     com.squareup.okio:okio:3.6.0 -> 3.16.0
- *     (in compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath)
- *
- *   Update your version catalog or add these configurations to ignoredConfigurations.
- * ```
- *
- * (the violation is a single line in the real output, wrapped here to fit the line length limit)
- *
- * telling you to update a catalog to a version that another catalog in the same build already
- * declares, for a bump Straitjacket performed itself.
- *
- * `the module is forced up ...` passes today, and is here as a trap guard: it pins down that the
- * *forcing* side did the sensible thing in this ordering, so the failure above is not a reason to
- * start forcing to the lowest declared version. That would turn the failing test green while making
- * the plugin ignore the higher pin, which is the second symptom described next.
- *
- * ## The mirror ordering, which fails silently
- *
- * Swapping the two declarations - `libs` at 3.16.0 and `someOtherLibs` at 3.6.0 - was verified to
- * resolve okio to **3.6.0**, and both check tasks pass. That confirms the winner is decided by
- * registration order rather than by version, and it is arguably the worse of the two symptoms:
- * `libs` declares a 3.16.0 pin, the build quietly resolves below it, and no check ever notices
- * because `StraitjacketCheck.execute` only reports resolved versions *above* the catalog and never
- * below.
- *
- * That ordering is deliberately not the fixture here, because a single scenario cannot assert both
- * symptoms at once and this one is the loud, user-visible failure. Whoever fixes this should check
- * the mirror ordering by hand as well. A correct fix makes both orderings force 3.16.0 and pass, at
- * which point the distinction disappears and one fixture covers both.
- *
- * ## Suggested fix
- *
- * The forcing side needs a single authoritative version per module across *all* catalogs, and the
- * checking side has to agree with it. Two defensible shapes:
- * 1. Reconcile across catalogs: build one coordinate to version map from every non-ignored catalog,
- *    taking the highest declared version, and have both the single resolution rule and the check
- *    tasks read it. Consistent with how the plugin already forces upward, and it fixes both
- *    symptoms at once. It does mean a per-catalog check task can no longer be understood purely in
- *    terms of its own catalog, so the violation message should probably name the catalog that
- *    supplied the authoritative version.
- * 2. Keep catalogs independent but make each check judge only what its own catalog is authoritative
- *    for, so a catalog never reports a violation for a version another catalog declares. Preserves
- *    per-catalog isolation, but leaves the question of which catalog wins the forcing unanswered,
- *    and so leaves the silently-ignored-pin symptom in place.
- *
- * Option 1 is the more complete fix. Either way `ignoredCatalogs` has to be honoured when deciding
- * what is authoritative: an ignored catalog must not contribute a version.
- *
- * ## Relationship to the other known bugs
- *
- * Independent of both, despite the family resemblance:
- * - **Duplicate alias** (same module under two aliases in *one* catalog): fixed by resolving
- *   duplicates to the highest declared version in one shared place. That fix is per-catalog by
- *   construction, so this scenario still fails with it applied - verified.
- * - **Reported configurations** (`buildResolvedVersionMap` pairing the highest resolved version
- *   with every configuration the module appeared in): purely about the accuracy of an otherwise
- *   genuine violation report, and does not involve the forcing side at all. Note that the `(in
- *   ...)` list in the output above comes from that code path, so its wording may shift when that
- *   bug is fixed.
+ * The `printResolvedOkio` tests stop the check tests being satisfied by forcing to the lowest
+ * declared version, which would turn them green while making the plugin ignore the higher pin.
  */
 class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -133,12 +41,14 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
       """
         $DEFAULT_REPOSITORIES_KTS
 
-        // Registered after the default 'libs' catalog, which makes it the last one Straitjacket
-        // registers a resolution rule for, and so the one that wins the forcing.
+        // Registered after the default 'libs' catalog, so this is the last catalog Straitjacket
+        // registers a resolution rule for. Declared in code rather than a TOML so that the version
+        // can vary per test, which is what lets one fixture cover both registration orderings.
         dependencyResolutionManagement {
           versionCatalogs {
             create("someOtherLibs") {
-              from(files("gradle/someOtherLibs.versions.toml"))
+              library("okio", "com.squareup.okio", "okio")
+                .version(providers.gradleProperty("otherOkioVersion").getOrElse("3.16.0"))
             }
           }
         }
@@ -153,13 +63,13 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
         id("dev.jonpoulton.straitjacket")
       }
 
-      // Below both declared versions, so the forcing side is guaranteed to kick in.
+      // Defaults below both declared versions, so the forcing side is guaranteed to kick in.
       dependencies {
-        implementation("com.squareup.okio:okio:3.0.0")
+        implementation("com.squareup.okio:okio:" + providers.gradleProperty("okioVersion").getOrElse("3.0.0"))
       }
 
       // Resolving a configuration in a doLast block is not configuration-cache compatible, so the
-      // test that uses this task opts out of the cache the harness enables by default.
+      // tests that use this task opt out of the cache the harness enables by default.
       tasks.register("printResolvedOkio") {
         doLast {
           configurations.getByName("runtimeClasspath").incoming.resolutionResult.allComponents {
@@ -181,30 +91,62 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
       """
         .trimIndent()
     )
-
-    ("gradle" / "someOtherLibs.versions.toml")(
-      """
-      [libraries]
-      okio = { module = "com.squareup.okio:okio", version = "3.16.0" }
-      """
-        .trimIndent()
-    )
   }
 
   @Test
-  fun `the check passes when two catalogs declare different versions of the same module`() =
+  fun `the highest version wins when the catalog registered last declares it`() = runScenario {
+    assertThatTask(":printResolvedOkio", "-PotherOkioVersion=3.16.0")
+      .withoutConfigurationCache()
+      .buildsSuccessfully()
+      .outputContains("RESOLVED_OKIO=3.16.0")
+      .outputDoesNotContain("RESOLVED_OKIO=3.6.0")
+  }
+
+  @Test
+  fun `the highest version wins when the catalog registered first declares it`() = runScenario {
+    assertThatTask(":printResolvedOkio", "-PotherOkioVersion=3.1.0")
+      .withoutConfigurationCache()
+      .buildsSuccessfully()
+      .outputContains("RESOLVED_OKIO=3.6.0")
+      .outputDoesNotContain("RESOLVED_OKIO=3.1.0")
+  }
+
+  @Test
+  fun `every catalog passes the check when the catalog registered last declares the highest`() =
     runScenario {
-      assertThatTask(":straitjacketCheck")
+      assertThatTask(":straitjacketCheck", "-PotherOkioVersion=3.16.0")
         .buildsSuccessfully()
         .taskSucceeded(":straitjacketCheckLibs")
         .taskSucceeded(":straitjacketCheckSomeOtherLibs")
     }
 
   @Test
-  fun `the module is forced up to the highest version any catalog declares`() = runScenario {
-    assertThatTask(":printResolvedOkio")
-      .withoutConfigurationCache()
-      .buildsSuccessfully()
-      .outputContains("RESOLVED_OKIO=3.16.0")
+  fun `every catalog passes the check when the catalog registered first declares the highest`() =
+    runScenario {
+      assertThatTask(":straitjacketCheck", "-PotherOkioVersion=3.1.0")
+        .buildsSuccessfully()
+        .taskSucceeded(":straitjacketCheckLibs")
+        .taskSucceeded(":straitjacketCheckSomeOtherLibs")
+    }
+
+  // 3.16.4 is above every version either catalog declares, so nothing is forced and the violation
+  // is genuine. `libs` is asked for by name rather than through the aggregate task, because
+  // `someOtherLibs` fails too and only the first failing task in the graph would get to run.
+  //
+  // The version reported is the one the forcing side aimed for, 3.16.0, not `libs`' own 3.6.0.
+  // Reporting 3.6.0 would be telling you to update a catalog to a version it is already being held
+  // above by another catalog. That means a per-catalog check can no longer be read purely in terms
+  // of its own catalog, so the message names where the version came from.
+  @Test
+  fun `a violation is reported against the highest version any catalog declares`() = runScenario {
+    assertThatTask(":straitjacketCheckLibs", "-PotherOkioVersion=3.16.0", "-PokioVersion=3.16.4")
+      .failsBuild()
+      .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")
+      .trimmedOutputContains(
+        """
+        com.squareup.okio:okio:3.16.0 (declared by catalog 'someOtherLibs') -> 3.16.4 (in compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath)
+        """
+          .trimIndent()
+      )
   }
 }

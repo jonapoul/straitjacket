@@ -130,6 +130,7 @@ Put it in `gradle.properties` (project or `~/.gradle`) if you want that to be th
 
 - Only **resolvable** configurations are looked at, meaning ones Gradle can resolve to a concrete set of artifacts. `implementation` and `api` get covered via the classpath configurations they feed into.
 - Versions are compared using [Semantic Versioning](https://semver.org/) precedence, including pre-release ordering like `1.0.0-alpha` < `1.0.0`. Build metadata (`+...`) isn't stripped out and can compare wrongly, so don't rely on it in catalog versions.
+- If the same module is declared more than once at different versions, whether under two aliases in one catalog or by two different catalogs, the highest declared version is the one that counts. It's what gets forced, and no check reports it as a violation. Ignored catalogs don't get a say.
 - The plugin is compatible with Gradle's [configuration cache](https://docs.gradle.org/current/userguide/configuration_cache.html).
 
 ## License

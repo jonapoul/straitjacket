@@ -15,6 +15,13 @@ public abstract class StraitjacketCheck : DefaultTask() {
   // Map of "$group:$name" to "$catalogVersion"
   @get:Input public abstract val catalogVersions: MapProperty<String, String>
 
+  // Map of "$group:$name" to [highestDeclaredVersion, declaringCatalogName], across every catalog
+  // in the build that Straitjacket is not ignoring. A module this catalog declares can be declared
+  // higher by another catalog, and the version that wins there is the one the forcing side aims
+  // for, so it is the one to judge the resolved version against. Empty falls back to this
+  // catalog's own declaration.
+  @get:Input public abstract val authoritativeVersions: MapProperty<String, List<String>>
+
   // Map of "$group:$name" to a map of "$resolvedVersion" to the configurations which resolved it.
   // One module can appear under several versions, one per version it resolved to.
   @get:Input public abstract val resolvedVersions: MapProperty<String, Map<String, List<String>>>
@@ -25,15 +32,26 @@ public abstract class StraitjacketCheck : DefaultTask() {
   @TaskAction
   public fun execute() {
     val catalog = catalogVersions.get()
+    val authoritative = authoritativeVersions.get()
     val resolved = resolvedVersions.get()
     val violations = mutableListOf<String>()
 
     for ((coordinate, versions) in resolved) {
       val catalogVersion = catalog[coordinate] ?: continue
+      val declaredVersion = authoritative[coordinate]?.first() ?: catalogVersion
+      // Only worth naming a catalog when it is not the one this task checks, otherwise the
+      // message repeats what the task name already says.
+      val declaredBy =
+        authoritative[coordinate]
+          ?.getOrNull(1)
+          ?.takeIf { declaredVersion != catalogVersion }
+          ?.let { " (declared by catalog '$it')" }
+          .orEmpty()
       for ((resolvedVersion, configNames) in versions) {
-        if (Version(resolvedVersion) > Version(catalogVersion)) {
+        if (Version(resolvedVersion) > Version(declaredVersion)) {
           val configNameStr = configNames.joinToString(", ")
-          violations += "$coordinate:$catalogVersion -> $resolvedVersion (in $configNameStr)"
+          violations +=
+            "$coordinate:$declaredVersion$declaredBy -> $resolvedVersion (in $configNameStr)"
         }
       }
     }

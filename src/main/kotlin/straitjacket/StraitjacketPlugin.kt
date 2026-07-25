@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.SetProperty
 import straitjacket.internal.applyRestriction
+import straitjacket.internal.buildAuthoritativeVersionMap
 import straitjacket.internal.buildCatalogVersionMap
 import straitjacket.internal.registerAggregateCheckTask
 import straitjacket.internal.registerPerCatalogCheckTask
@@ -35,11 +36,22 @@ public class StraitjacketPlugin : Plugin<Project> {
         tasks.named("check").configure { t -> t.dependsOn(aggregateCheck) }
       }
 
+      // Built once per catalog so that forcing and checking can never disagree about what a catalog
+      // declares. See buildCatalogVersionMap for how duplicate aliases are resolved.
+      val versionsByCatalog =
+        versionCatalogs.catalogNames.associateWith { catalogName ->
+          buildCatalogVersionMap(versionCatalogs.named(catalogName))
+        }
+
+      // Which catalog wins a module declared by several of them. Stays a provider because
+      // ignoredCatalogs is only final once the build script has configured the extension, and an
+      // ignored catalog must not contribute a version.
+      val authoritativeVersions = ignoredCatalogs.map { ignored ->
+        buildAuthoritativeVersionMap(versionsByCatalog.filterKeys { it !in ignored })
+      }
+
       // Register resolution strategy and check task for every available catalog.
-      versionCatalogs.catalogNames.forEach { catalogName ->
-        // Built once so that forcing and checking can never disagree about what the catalog
-        // declares. See buildCatalogVersionMap for how duplicate aliases are resolved.
-        val catalogVersions = buildCatalogVersionMap(versionCatalogs.named(catalogName))
+      versionsByCatalog.forEach { (catalogName, catalogVersions) ->
         val isIgnored = ignoredCatalogs.map { ignored -> catalogName in ignored }
         val active = enabled.zip(isIgnored) { isEnabled, ignored -> isEnabled && !ignored }
 
@@ -55,6 +67,7 @@ public class StraitjacketPlugin : Plugin<Project> {
           registerPerCatalogCheckTask(
             catalogName = catalogName,
             catalogVersions = catalogVersions,
+            authoritativeVersions = authoritativeVersions,
             matchingConfigs = matchingConfigs,
             active = active,
           )
