@@ -2,6 +2,7 @@ package straitjacket.test
 
 import assertk.Assert
 import assertk.assertions.contains
+import assertk.assertions.doesNotContain
 import blueprint.test.taskSkipped
 import kotlin.DeprecationLevel.ERROR
 import org.gradle.testkit.runner.BuildResult
@@ -43,3 +44,13 @@ fun Assert<BuildResult>.tasksSkipped(vararg names: String): Assert<BuildResult> 
 @Suppress("unused", "UnusedReceiverParameter")
 fun Assert<BuildResult>.tasksSkipped(): Assert<BuildResult> =
   throw UnsupportedOperationException("tasksSkipped needs at least one string")
+
+fun Assert<String>.contains(expected: String): Assert<String> = transform { actual ->
+  assertThat(actual).contains(expected)
+  actual
+}
+
+fun Assert<String>.doesNotContain(expected: String): Assert<String> = transform { actual ->
+  assertThat(actual).doesNotContain(expected)
+  actual
+}
