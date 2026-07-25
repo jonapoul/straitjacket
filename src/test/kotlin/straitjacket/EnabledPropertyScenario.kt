@@ -82,7 +82,7 @@ class EnabledPropertyScenario : StraitjacketScenarioTest() {
   fun `Non-boolean string for the enabled property falls back to extension`() = runScenario {
     listOf("", "not-a-bool", "1", "0", "TRUE", " true", "true ").forEach { enabledProperty ->
       assertThatTask(":straitjacketCheck")
-        .withGradleProperty("straitjacket.enabled", enabledProperty)
+        .withGradleProperty(name = "straitjacket.enabled", value = enabledProperty)
         .buildsSuccessfully()
         .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
     }
