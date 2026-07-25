@@ -34,21 +34,29 @@ internal fun Project.registerPerCatalogCheckTask(
   }
 }
 
+/**
+ * Returns "$group:$name" -> resolved version -> the sorted names of the configurations which
+ * resolved that version.
+ *
+ * A module can resolve to different versions in different configurations, so the version has to be
+ * part of the key. Collapsing to one version per module would report the wrong configurations
+ * against it, and would hide any other offending version it resolved to.
+ */
 private fun buildResolvedVersionMap(
   matchingConfigs: NamedDomainObjectSet<Configuration>
-): Map<String, List<String>> {
-  val versions = mutableMapOf<String, String>()
-  val configs = mutableMapOf<String, MutableSet<String>>()
+): Map<String, Map<String, List<String>>> {
+  val configs = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
   matchingConfigs.forEach { config ->
     config.incoming.resolutionResult.allComponents { component ->
       val id = component.moduleVersion ?: return@allComponents
       val key = "${id.group}:${id.name}"
-      val existing = versions[key]
-      if (existing == null || Version(id.version) > Version(existing)) {
-        versions[key] = id.version
-      }
-      configs.getOrPut(key) { mutableSetOf() }.add(config.name)
+      configs
+        .getOrPut(key) { mutableMapOf() }
+        .getOrPut(id.version) { mutableSetOf() }
+        .add(config.name)
     }
   }
-  return versions.mapValues { (key, version) -> listOf(version) + configs.getValue(key).sorted() }
+  return configs.mapValues { (_, byVersion) ->
+    byVersion.mapValues { (_, configNames) -> configNames.sorted() }
+  }
 }
