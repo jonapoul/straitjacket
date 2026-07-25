@@ -16,12 +16,20 @@ public class StraitjacketPlugin : Plugin<Project> {
     with(target) {
       val extension = extensions.create("straitjacket", StraitjacketExtension::class.java)
 
+      // Finalized on read because the rules below ask for this once per dependency, per catalog,
+      // for every resolution in the build, and Gradle does not memoise a provider chain. Nothing
+      // can change the answer by then: resolution happens long after the extension is configured
       val enabled =
-        providers
-          .gradleProperty("straitjacket.enabled")
-          .map(String::toBooleanStrictOrNull)
-          .orElse(extension.enabled)
-          .orElse(true)
+        objects
+          .property(Boolean::class.java)
+          .value(
+            providers
+              .gradleProperty("straitjacket.enabled")
+              .map(String::toBooleanStrictOrNull)
+              .orElse(extension.enabled)
+              .orElse(true)
+          )
+      enabled.finalizeValueOnRead()
 
       val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
       val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
@@ -53,8 +61,16 @@ public class StraitjacketPlugin : Plugin<Project> {
 
       // Register resolution strategy and check task for every available catalog.
       versionsByCatalog.forEach { (catalogName, catalogVersions) ->
-        val isIgnored = ignoredCatalogs.map { ignored -> catalogName in ignored }
-        val active = enabled.zip(isIgnored) { isEnabled, ignored -> isEnabled && !ignored }
+        // Finalized on read for the same reason as enabled, which it builds on
+        val active =
+          objects
+            .property(Boolean::class.java)
+            .value(
+              enabled.zip(ignoredCatalogs) { isEnabled, ignored ->
+                isEnabled && catalogName !in ignored
+              }
+            )
+        active.finalizeValueOnRead()
 
         matchingConfigs.configureEach { configuration ->
           configuration.resolutionStrategy.eachDependency { details ->
