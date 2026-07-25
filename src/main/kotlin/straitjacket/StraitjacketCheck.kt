@@ -15,8 +15,9 @@ public abstract class StraitjacketCheck : DefaultTask() {
   // Map of "$group:$name" to "$catalogVersion"
   @get:Input public abstract val catalogVersions: MapProperty<String, String>
 
-  // Map of "$group:$name" to [resolvedVersion, config1, config2, ...]
-  @get:Input public abstract val resolvedVersions: MapProperty<String, List<String>>
+  // Map of "$group:$name" to a map of "$resolvedVersion" to the configurations which resolved it.
+  // One module can appear under several versions, one per version it resolved to.
+  @get:Input public abstract val resolvedVersions: MapProperty<String, Map<String, List<String>>>
 
   // Generated report file. If successful, this file will be created with no contents
   @get:OutputFile public abstract val reportFile: RegularFileProperty
@@ -27,13 +28,13 @@ public abstract class StraitjacketCheck : DefaultTask() {
     val resolved = resolvedVersions.get()
     val violations = mutableListOf<String>()
 
-    for ((coordinate, parts) in resolved) {
+    for ((coordinate, versions) in resolved) {
       val catalogVersion = catalog[coordinate] ?: continue
-      val resolvedVersion = parts.first()
-      val configNames = parts.drop(1)
-      if (Version(resolvedVersion) > Version(catalogVersion)) {
-        val configNameStr = configNames.joinToString(", ")
-        violations += "$coordinate:$catalogVersion -> $resolvedVersion (in $configNameStr)"
+      for ((resolvedVersion, configNames) in versions) {
+        if (Version(resolvedVersion) > Version(catalogVersion)) {
+          val configNameStr = configNames.joinToString(", ")
+          violations += "$coordinate:$catalogVersion -> $resolvedVersion (in $configNameStr)"
+        }
       }
     }
 
