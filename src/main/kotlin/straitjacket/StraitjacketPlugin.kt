@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.api.provider.SetProperty
+import straitjacket.internal.GlobSet
 import straitjacket.internal.applyRestriction
 import straitjacket.internal.buildAuthoritativeVersionMap
 import straitjacket.internal.buildCatalogVersionMap
@@ -13,6 +14,7 @@ import straitjacket.internal.registerPerCatalogCheckTask
 import straitjacket.internal.resolvedVersions
 
 public class StraitjacketPlugin : Plugin<Project> {
+  @Suppress("LongMethod")
   override fun apply(target: Project): Unit =
     with(target) {
       val extension = extensions.create("straitjacket", StraitjacketExtension::class.java)
@@ -34,6 +36,14 @@ public class StraitjacketPlugin : Plugin<Project> {
 
       val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
       ignoredConfigurations.finalizeValueOnRead()
+
+      // Compiled once for the same reason, and held in a property rather than a plain value because
+      // the extension has not been configured yet at this point in apply
+      val ignoredModules =
+        objects
+          .property(GlobSet::class.java)
+          .value(extension.ignoredModules.convention(emptySet()).map(::GlobSet))
+      ignoredModules.finalizeValueOnRead()
 
       val versionCatalogs = extensions.getByType(VersionCatalogsExtension::class.java)
 
@@ -85,7 +95,7 @@ public class StraitjacketPlugin : Plugin<Project> {
           // module.
           configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
             if (active.get() && configurationName !in ignoredConfigurations.get()) {
-              substitution.applyRestriction(catalogName, catalogVersions)
+              substitution.applyRestriction(catalogName, catalogVersions, ignoredModules.get())
             }
           }
         }
@@ -96,6 +106,7 @@ public class StraitjacketPlugin : Plugin<Project> {
             catalogVersions = catalogVersions,
             authoritativeVersions = authoritativeVersions,
             resolvedVersions = resolvedVersions,
+            ignoredModules = extension.ignoredModules,
             active = active,
           )
         aggregateCheck.configure { it.dependsOn(perCatalogCheck) }

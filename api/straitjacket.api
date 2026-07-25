@@ -3,6 +3,7 @@ public abstract class straitjacket/StraitjacketCheck : org/gradle/api/DefaultTas
 	public final fun execute ()V
 	public abstract fun getAuthoritativeVersions ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getCatalogVersions ()Lorg/gradle/api/provider/MapProperty;
+	public abstract fun getIgnoredModules ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getReportFile ()Lorg/gradle/api/file/RegularFileProperty;
 	public abstract fun getResolvedVersions ()Lorg/gradle/api/provider/MapProperty;
 }
@@ -11,6 +12,7 @@ public abstract interface class straitjacket/StraitjacketExtension {
 	public abstract fun getEnabled ()Lorg/gradle/api/provider/Property;
 	public abstract fun getIgnoredCatalogs ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getIgnoredConfigurations ()Lorg/gradle/api/provider/SetProperty;
+	public abstract fun getIgnoredModules ()Lorg/gradle/api/provider/SetProperty;
 }
 
 public final class straitjacket/StraitjacketPlugin : org/gradle/api/Plugin {

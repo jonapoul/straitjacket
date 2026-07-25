@@ -4,10 +4,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import straitjacket.internal.GlobSet
 import straitjacket.internal.Version
 
 @CacheableTask
@@ -26,6 +28,10 @@ public abstract class StraitjacketCheck : DefaultTask() {
   // One module can appear under several versions, one per version it resolved to.
   @get:Input public abstract val resolvedVersions: MapProperty<String, Map<String, List<String>>>
 
+  // "$group:$name" patterns, in which "*" stands for any run of characters, for modules this check
+  // must not report however they resolve. The forcing side leaves the same modules alone.
+  @get:Input public abstract val ignoredModules: SetProperty<String>
+
   // Generated report file. If successful, this file will be created with no contents
   @get:OutputFile public abstract val reportFile: RegularFileProperty
 
@@ -34,9 +40,11 @@ public abstract class StraitjacketCheck : DefaultTask() {
     val catalog = catalogVersions.get()
     val authoritative = authoritativeVersions.get()
     val resolved = resolvedVersions.get()
+    val ignored = GlobSet(ignoredModules.get())
     val violations = mutableListOf<String>()
 
     for ((coordinate, versions) in resolved) {
+      if (coordinate in ignored) continue
       val catalogVersion = catalog[coordinate] ?: continue
       val declaredVersion = authoritative[coordinate]?.first() ?: catalogVersion
       // Only worth naming a catalog when it is not the one this task checks, otherwise the
@@ -68,7 +76,7 @@ public abstract class StraitjacketCheck : DefaultTask() {
           violations.sorted().forEach { appendLine("  $it") }
           appendLine()
           appendLine(
-            "Update your version catalog or add these configurations to ignoredConfigurations."
+            "Update your version catalog, or exclude them with ignoredModules or ignoredConfigurations."
           )
         }
       }

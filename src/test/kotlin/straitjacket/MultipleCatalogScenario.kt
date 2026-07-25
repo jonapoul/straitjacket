@@ -73,7 +73,7 @@ class MultipleCatalogScenario : StraitjacketScenarioTest() {
 
             com.squareup.okio:okio:3.16.0 -> 3.16.4 (in compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath)
 
-          Update your version catalog or add these configurations to ignoredConfigurations.
+          Update your version catalog, or exclude them with ignoredModules or ignoredConfigurations.
         """
           .trimIndent()
       )
