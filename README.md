@@ -113,6 +113,10 @@ straitjacket {
   // build. Defaults to true.
   failOnViolation = true
 
+  // The level to log every dependency that gets forced up at. Unset by default, which
+  // is silent.
+  logForcedVersions = LogLevel.LIFECYCLE
+
   // Exclude configurations (by name) from both forcing and checking. "*" matches any run
   // of characters, so a single pattern can cover a whole family of generated names.
   ignoredConfigurations.add("someConfiguration")
@@ -136,12 +140,25 @@ A configuration name without a `*` matches exactly, so patterns only ever widen 
 
 `failOnViolation = false` is for adopting Straitjacket on a project that isn't clean yet, where failing on day one isn't an option but the drift still wants watching. The check tasks log the same report at `WARN` and succeed. Note that a task which succeeds is up to date on the next build and doesn't log its warning again, so treat the report file as the record. It's written either way, and the warning says where it is.
 
-Both `enabled` and `failOnViolation` can also be set with a Gradle property, `straitjacket.enabled` and `straitjacket.failOnViolation`. Each wins over its extension value, so you can change either for a one-off build without touching the build script:
+Forcing is otherwise silent: it leaves no trace beyond the selection reason, which you only see by asking for a dependency insight report. Setting `logForcedVersions` to a [`LogLevel`](https://docs.gradle.org/current/javadoc/org/gradle/api/logging/LogLevel.html) says what moved and where, one line per configuration that resolved the dependency:
+
+```
+Straitjacket forced com.website:bar 2.3.4 -> 2.5.0 in runtimeClasspath (catalog 'libs')
+```
+
+Which level to pick depends on what you want it for. `INFO` keeps it out of a normal build and puts it behind `--info`, for when you're working something out and don't want to keep switching it on and off. `LIFECYCLE` or higher makes it a permanent part of the build log, for a record in CI. Leave it unset for silence, or call `logForcedVersions.unset()` to opt out of a level a convention plugin set.
+
+The logging happens during resolution, so a build that resolves nothing, having found its tasks up to date, logs nothing.
+
+`enabled`, `failOnViolation` and `logForcedVersions` can each also be set with a Gradle property of the same name under a `straitjacket.` prefix. Each wins over its extension value, so you can change any of them for a one-off build without touching the build script:
 
 ```
 ./gradlew build -Pstraitjacket.enabled=false
 ./gradlew check -Pstraitjacket.failOnViolation=false
+./gradlew build -Pstraitjacket.logForcedVersions=info
 ```
+
+A level name is matched without regard to case, and anything that doesn't name one falls back to the extension value, as an unparseable boolean does.
 
 Put them in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
 

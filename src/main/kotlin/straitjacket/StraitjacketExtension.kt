@@ -1,5 +1,6 @@
 package straitjacket
 
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 
@@ -27,6 +28,30 @@ public interface StraitjacketExtension {
    * priority over this value.
    */
   public val failOnViolation: Property<Boolean>
+
+  /**
+   * The level at which to log every dependency Straitjacket forces up to its catalog version. Unset
+   * by default, which is silent.
+   *
+   * Forcing otherwise leaves no trace beyond the selection reason, which you only see by asking for
+   * a dependency insight report. Setting a level says what moved and where:
+   * ```
+   * Straitjacket forced com.website:bar 2.3.4 -> 2.5.0 in runtimeClasspath (catalog 'libs')
+   * ```
+   *
+   * Which level to pick depends on what you want it for. [LogLevel.INFO] keeps it out of a normal
+   * build and puts it behind `--info`, for when you are working something out. [LogLevel.LIFECYCLE]
+   * or higher makes it a permanent part of the build log, for a record in CI.
+   *
+   * One line per configuration that resolved the dependency, so a module forced in four classpaths
+   * says so four times. Logging happens during resolution, so a build that resolves nothing, having
+   * found its tasks up to date, logs nothing.
+   *
+   * Call `unset()` to silence a level a convention plugin has set. The
+   * `straitjacket.logForcedVersions` Gradle property takes priority over this value, and is matched
+   * to a level by name without regard to case.
+   */
+  public val logForcedVersions: Property<LogLevel>
 
   /**
    * Excludes the matching [org.gradle.api.artifacts.Configuration] names from both halves of

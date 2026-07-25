@@ -4,6 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Provider
 import straitjacket.internal.GlobSet
 import straitjacket.internal.applyRestriction
@@ -47,6 +48,19 @@ public class StraitjacketPlugin : Plugin<Project> {
           .property(GlobSet::class.java)
           .value(extension.ignoredModules.convention(emptySet()).map(::GlobSet))
       ignoredModules.finalizeValueOnRead()
+
+      // Finalized on read like enabled: the rule holds this across every resolution in the build.
+      // No orElse, because having no level is what silence is.
+      val logForcedVersions =
+        objects
+          .property(LogLevel::class.java)
+          .value(
+            providers
+              .gradleProperty("straitjacket.logForcedVersions")
+              .map(::logLevelOrNull)
+              .orElse(extension.logForcedVersions)
+          )
+      logForcedVersions.finalizeValueOnRead()
 
       // A plain provider chain, unlike enabled: only the check tasks read this, once each at
       // execution time, so there is no resolution hot path to memoise it for
@@ -107,7 +121,13 @@ public class StraitjacketPlugin : Plugin<Project> {
           // module.
           configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
             if (active.get() && configurationName !in ignoredConfigurations.get()) {
-              substitution.applyRestriction(catalogName, catalogVersions, ignoredModules.get())
+              substitution.applyRestriction(
+                catalogName = catalogName,
+                configurationName = configurationName,
+                catalogVersions = catalogVersions,
+                ignoredModules = ignoredModules.get(),
+                logForcedVersions = logForcedVersions,
+              )
             }
           }
         }
@@ -128,4 +148,9 @@ public class StraitjacketPlugin : Plugin<Project> {
 
   private fun Configuration.shouldBeChecked(ignoredConfigurations: Provider<GlobSet>): Boolean =
     isCanBeResolved && name !in ignoredConfigurations.get()
+
+  // Null leaves the provider absent, so a string naming no level falls back to the extension, as an
+  // unparseable boolean property does
+  private fun logLevelOrNull(string: String): LogLevel? =
+    LogLevel.entries.firstOrNull { level -> level.name.equals(string, ignoreCase = true) }
 }

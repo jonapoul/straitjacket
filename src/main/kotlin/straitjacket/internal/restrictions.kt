@@ -4,6 +4,9 @@ import org.gradle.api.artifacts.DependencySubstitution
 import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.internal.artifacts.DependencySubstitutionInternal
 import org.gradle.api.internal.artifacts.dependencies.DefaultImmutableVersionConstraint
+import org.gradle.api.logging.LogLevel
+import org.gradle.api.logging.Logging
+import org.gradle.api.provider.Provider
 import org.gradle.internal.component.external.model.DefaultModuleComponentSelector
 
 /**
@@ -12,11 +15,16 @@ import org.gradle.internal.component.external.model.DefaultModuleComponentSelect
  *
  * Modules matching [ignoredModules] are left alone, as are project dependencies. Substituting a
  * version for a project swaps it out for a module that only exists once published.
+ *
+ * [logForcedVersions] is only read once a force is going ahead, so a build that leaves it unset
+ * pays nothing for it on a path that runs once per dependency per catalog per resolution.
  */
 internal fun DependencySubstitution.applyRestriction(
   catalogName: String,
+  configurationName: String,
   catalogVersions: Map<String, String>,
   ignoredModules: GlobSet,
+  logForcedVersions: Provider<LogLevel>,
 ) {
   val target = currentTarget() as? ModuleComponentSelector ?: return
 
@@ -35,8 +43,25 @@ internal fun DependencySubstitution.applyRestriction(
         "version catalog '$catalogName' declares $group:$name:$catalogVersion, which is greater " +
         "than $targetVersion",
     )
+
+    // No level set is what silence is
+    val level = logForcedVersions.orNull
+    if (level != null) {
+      // One line per configuration that resolved it, so a module forced in four classpaths says so
+      // four times. Collapsing them would need state shared across resolutions, which the
+      // configuration cache does not allow.
+      LOGGER.log(
+        level,
+        "Straitjacket forced $coordinate $targetVersion -> $catalogVersion in $configurationName " +
+          "(catalog '$catalogName')",
+      )
+    }
   }
 }
+
+// Fetched by name rather than captured from the Project, which a resolution rule must not hold on
+// to
+private val LOGGER = Logging.getLogger("straitjacket")
 
 /**
  * The selector an earlier rule substituted, or the requested one if nothing has touched it yet.
