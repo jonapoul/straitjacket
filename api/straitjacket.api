@@ -1,6 +1,7 @@
 public abstract class straitjacket/StraitjacketCheck : org/gradle/api/DefaultTask {
 	public fun <init> ()V
 	public final fun execute ()V
+	public abstract fun getAuthoritativeVersions ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getCatalogVersions ()Lorg/gradle/api/provider/MapProperty;
 	public abstract fun getReportFile ()Lorg/gradle/api/file/RegularFileProperty;
 	public abstract fun getResolvedVersions ()Lorg/gradle/api/provider/MapProperty;

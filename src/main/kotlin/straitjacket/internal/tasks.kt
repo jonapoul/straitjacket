@@ -19,6 +19,7 @@ internal fun Project.registerAggregateCheckTask(enabled: Provider<Boolean>): Tas
 internal fun Project.registerPerCatalogCheckTask(
   catalogName: String,
   catalogVersions: Map<String, String>,
+  authoritativeVersions: Provider<Map<String, List<String>>>,
   matchingConfigs: NamedDomainObjectSet<Configuration>,
   active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
@@ -28,6 +29,7 @@ internal fun Project.registerPerCatalogCheckTask(
     t.description =
       "Check that no resolved dependencies are newer than declared in the '$catalogName' version catalog."
     t.catalogVersions.set(catalogVersions)
+    t.authoritativeVersions.set(authoritativeVersions)
     t.resolvedVersions.set(provider { buildResolvedVersionMap(matchingConfigs) })
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
     t.onlyIf { active.get() }
