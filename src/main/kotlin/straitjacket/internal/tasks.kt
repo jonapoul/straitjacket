@@ -3,6 +3,7 @@ package straitjacket.internal
 import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.extensions.stdlib.capitalized
@@ -56,6 +57,9 @@ internal fun Project.resolvedVersions(
  * A module can resolve to different versions in different configurations, so the version has to be
  * part of the key. Collapsing to one version per module would report the wrong configurations
  * against it, and would hide any other offending version it resolved to.
+ *
+ * Projects are skipped. One reports its own coordinates here, and it builds at the version it
+ * declares, so neither remedy the check suggests could act on it.
  */
 private fun buildResolvedVersionMap(
   checkedConfigs: NamedDomainObjectSet<Configuration>
@@ -63,6 +67,7 @@ private fun buildResolvedVersionMap(
   val configs = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
   checkedConfigs.forEach { config ->
     config.incoming.resolutionResult.allComponents { component ->
+      if (component.id is ProjectComponentIdentifier) return@allComponents
       val id = component.moduleVersion ?: return@allComponents
       val key = "${id.group}:${id.name}"
       configs

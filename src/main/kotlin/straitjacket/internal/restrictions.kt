@@ -1,35 +1,58 @@
 package straitjacket.internal
 
-import org.gradle.api.artifacts.DependencyResolveDetails
+import org.gradle.api.artifacts.DependencySubstitution
+import org.gradle.api.artifacts.component.ModuleComponentSelector
+import org.gradle.api.internal.artifacts.DependencySubstitutionInternal
+import org.gradle.api.internal.artifacts.dependencies.DefaultImmutableVersionConstraint
+import org.gradle.internal.component.external.model.DefaultModuleComponentSelector
 
 /**
  * Forces this dependency up to the version [catalogName] declares for it, if that is higher than
- * the version the dependency is currently headed for.
+ * the version it is currently headed for.
  *
- * Every catalog in the build gets its own rule, and they all run against the same dependency, so
- * the comparison is against [DependencyResolveDetails.getTarget] rather than
- * [DependencyResolveDetails.getRequested]. `requested` always reports the version the build
- * originally asked for and never what an earlier rule already forced, so reading it would make each
- * catalog decide in isolation from the same starting point and let the last rule to run pull the
- * version back down. Reading the target means each rule builds on the previous one's decision, and
- * the highest version any catalog declares wins whatever order the catalogs were registered in.
+ * Project dependencies are left alone. Substituting a version for one swaps the project out for a
+ * module that only exists once published.
  */
-internal fun DependencyResolveDetails.applyRestriction(
+internal fun DependencySubstitution.applyRestriction(
   catalogName: String,
   catalogVersions: Map<String, String>,
 ) {
+  val target = currentTarget() as? ModuleComponentSelector ?: return
+
   val group = target.group
-  val name = target.name
+  val name = target.module
 
   val catalogVersion = catalogVersions["$group:$name"] ?: return
-  val targetVersion = target.version ?: return
+  val targetVersion = target.version
 
   if (Version(targetVersion) < Version(catalogVersion)) {
-    useVersion(catalogVersion)
-    because(
+    useTarget(
+      target.withVersion(catalogVersion),
       "straitjacket: " +
         "version catalog '$catalogName' declares $group:$name:$catalogVersion, which is greater " +
-        "than $targetVersion"
+        "than $targetVersion",
     )
   }
 }
+
+/**
+ * The selector an earlier rule substituted, or the requested one if nothing has touched it yet.
+ *
+ * Every catalog gets its own rule against the same dependency, so reading the public `requested`
+ * would let the last rule to run pull the version back down.
+ */
+private fun DependencySubstitution.currentTarget() = (this as DependencySubstitutionInternal).target
+
+/**
+ * The same selector at a different version.
+ *
+ * `"group:name:version"` notation would build a bare one and drop the attributes and capability
+ * selectors this carries, so a platform would stop being a platform.
+ */
+private fun ModuleComponentSelector.withVersion(version: String): ModuleComponentSelector =
+  DefaultModuleComponentSelector.newSelector(
+    moduleIdentifier,
+    DefaultImmutableVersionConstraint.of(version),
+    attributes,
+    capabilitySelectors,
+  )

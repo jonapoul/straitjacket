@@ -80,9 +80,12 @@ public class StraitjacketPlugin : Plugin<Project> {
         resolvableConfigs.configureEach { configuration ->
           // The name, not the Configuration, so the rule stays configuration cache friendly
           val configurationName = configuration.name
-          configuration.resolutionStrategy.eachDependency { details ->
+          // A substitution rule rather than eachDependency, which reports coordinates only: a
+          // project dependency reports the target project's own, so there is no telling it from a
+          // module.
+          configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
             if (active.get() && configurationName !in ignoredConfigurations.get()) {
-              details.applyRestriction(catalogName, catalogVersions)
+              substitution.applyRestriction(catalogName, catalogVersions)
             }
           }
         }
