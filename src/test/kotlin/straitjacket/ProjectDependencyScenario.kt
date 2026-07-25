@@ -12,11 +12,9 @@ import straitjacket.test.libsVersionsToml
 import straitjacket.test.settingsGradleKts
 import straitjacket.test.withoutConfigurationCache
 
-// A repo that publishes its own modules commonly declares them in its own catalog, and the catalog
-// entry runs ahead of the version the project currently builds at. The catalog then declares a
-// version higher than the project dependency resolves to, and forcing must leave the project
-// dependency alone: useVersion on a project component substitutes it for an external module that
-// only exists once published.
+// A repo that publishes its own modules declares them in its own catalog, and that entry runs ahead
+// of the version the project builds at. Forcing it swaps in a module that only exists once
+// published.
 class ProjectDependencyScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
     settingsGradleKts(
@@ -39,11 +37,8 @@ class ProjectDependencyScenario : StraitjacketScenarioTest() {
         implementation(project(":sub"))
       }
 
-      // Resolves runtimeClasspath and prints what :sub resolved to, so the test asserts the project
-      // dependency survived resolution rather than only that the build did not blow up. The files
-      // are resolved first because a component that failed to resolve is simply absent from
-      // allComponents, so walking the graph alone would report a substituted-away project
-      // dependency as a silent nothing.
+      // The files are resolved first because a component that failed to resolve is simply absent
+      // from allComponents, so walking the graph alone reports the bug as a silent nothing.
       tasks.register("printResolvedSub") {
         doLast {
           val runtimeClasspath = configurations.getByName("runtimeClasspath")
@@ -83,8 +78,8 @@ class ProjectDependencyScenario : StraitjacketScenarioTest() {
   @Test
   fun `a project dependency below the catalog version is not forced into an external module`() =
     runScenario {
-      // Resolving a configuration in a doLast block is not configuration-cache compatible, so this
-      // fixture task opts out of the cache that the harness enables by default.
+      // Resolving in doLast is not configuration-cache compatible, so this opts out of the cache
+      // the harness enables by default.
       assertThatTask(":printResolvedSub")
         .withoutConfigurationCache()
         .buildsSuccessfully()
