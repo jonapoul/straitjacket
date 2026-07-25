@@ -43,9 +43,9 @@ internal fun Project.registerPerCatalogCheckTask(
  * paid once per catalog.
  */
 internal fun Project.resolvedVersions(
-  matchingConfigs: NamedDomainObjectSet<Configuration>
+  checkedConfigs: NamedDomainObjectSet<Configuration>
 ): Provider<Map<String, Map<String, List<String>>>> {
-  val resolved = lazy { buildResolvedVersionMap(matchingConfigs) }
+  val resolved = lazy { buildResolvedVersionMap(checkedConfigs) }
   return provider { resolved.value }
 }
 
@@ -58,10 +58,10 @@ internal fun Project.resolvedVersions(
  * against it, and would hide any other offending version it resolved to.
  */
 private fun buildResolvedVersionMap(
-  matchingConfigs: NamedDomainObjectSet<Configuration>
+  checkedConfigs: NamedDomainObjectSet<Configuration>
 ): Map<String, Map<String, List<String>>> {
   val configs = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
-  matchingConfigs.forEach { config ->
+  checkedConfigs.forEach { config ->
     config.incoming.resolutionResult.allComponents { component ->
       val id = component.moduleVersion ?: return@allComponents
       val key = "${id.group}:${id.name}"
