@@ -158,7 +158,7 @@ The logging happens during resolution, so a build that resolves nothing, having 
 ./gradlew build -Pstraitjacket.logForcedVersions=info
 ```
 
-A level name is matched without regard to case, and anything that doesn't name one falls back to the extension value, as an unparseable boolean does.
+A level name is matched without regard to case. A value that names no level, or that isn't `true` or `false` for the two boolean ones, fails the build when it's read rather than quietly falling back to the extension value, so a typo can't leave the build doing the opposite of what you asked for.
 
 Put them in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
 

@@ -2,6 +2,7 @@ package straitjacket
 
 import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
+import blueprint.test.failsBuild
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
 import kotlin.test.Test
@@ -10,6 +11,7 @@ import straitjacket.test.buildGradleKts
 import straitjacket.test.libsVersionsToml
 import straitjacket.test.plusArguments
 import straitjacket.test.settingsGradleKts
+import straitjacket.test.trimmedOutputContains
 import straitjacket.test.withGradleProperty
 
 /**
@@ -153,13 +155,21 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
     }
   }
 
+  /**
+   * Falling back would leave the extension's level in place and hide the typo. The level is only
+   * read while forcing, so this needs a task that resolves a configuration: `compileKotlin` does,
+   * where `straitjacketCheck` only walks the resolution result.
+   */
   @Test
-  fun `a property that names no level falls back to the extension`() = runScenario {
+  fun `a property that names no level fails the build`() = runScenario {
     listOf("", "not-a-level", "true", "verbose").forEach { property ->
-      assertThatTask(":straitjacketCheck", "-Plevel=LIFECYCLE", "--rerun-tasks")
+      assertThatTask(":compileKotlin", "-Plevel=LIFECYCLE", "--rerun-tasks")
         .withGradleProperty(name = "straitjacket.logForcedVersions", value = property)
-        .buildsSuccessfully()
-        .outputContains("Straitjacket forced com.squareup.okio:okio 3.6.0 -> 3.16.0")
+        .failsBuild()
+        .trimmedOutputContains(
+          "Gradle property 'straitjacket.logForcedVersions' is set to '$property', " +
+            "which is not a log level (DEBUG, INFO, LIFECYCLE, WARN, QUIET, ERROR)."
+        )
     }
   }
 }

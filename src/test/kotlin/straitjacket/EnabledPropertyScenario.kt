@@ -78,13 +78,20 @@ class EnabledPropertyScenario : StraitjacketScenarioTest() {
       .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 
+  /**
+   * A typo here would otherwise leave the extension in charge, so the build would quietly do the
+   * opposite of what the property asked for.
+   */
   @Test
-  fun `Non-boolean string for the enabled property falls back to extension`() = runScenario {
+  fun `a non-boolean string for the property fails the build`() = runScenario {
     listOf("", "not-a-bool", "1", "0", "TRUE", " true", "true ").forEach { enabledProperty ->
-      assertThatTask(":straitjacketCheck")
+      assertThatTask(":straitjacketCheck", "--rerun-tasks")
         .withGradleProperty(name = "straitjacket.enabled", value = enabledProperty)
-        .buildsSuccessfully()
-        .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
+        .failsBuild()
+        .trimmedOutputContains(
+          "Gradle property 'straitjacket.enabled' is set to '$enabledProperty', " +
+            "which is not a boolean (true or false)."
+        )
     }
   }
 }

@@ -8,8 +8,10 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Provider
 import straitjacket.internal.GlobSet
 import straitjacket.internal.applyRestriction
+import straitjacket.internal.booleanProperty
 import straitjacket.internal.buildAuthoritativeVersionMap
 import straitjacket.internal.buildCatalogVersionMap
+import straitjacket.internal.logLevelProperty
 import straitjacket.internal.registerAggregateCheckTask
 import straitjacket.internal.registerPerCatalogCheckTask
 import straitjacket.internal.resolvedVersions
@@ -27,11 +29,7 @@ public class StraitjacketPlugin : Plugin<Project> {
         objects
           .property(Boolean::class.java)
           .value(
-            providers
-              .gradleProperty("straitjacket.enabled")
-              .map(String::toBooleanStrictOrNull)
-              .orElse(extension.enabled)
-              .orElse(true)
+            providers.booleanProperty("straitjacket.enabled").orElse(extension.enabled).orElse(true)
           )
       enabled.finalizeValueOnRead()
 
@@ -56,8 +54,7 @@ public class StraitjacketPlugin : Plugin<Project> {
           .property(LogLevel::class.java)
           .value(
             providers
-              .gradleProperty("straitjacket.logForcedVersions")
-              .map(::logLevelOrNull)
+              .logLevelProperty("straitjacket.logForcedVersions")
               .orElse(extension.logForcedVersions)
           )
       logForcedVersions.finalizeValueOnRead()
@@ -66,8 +63,7 @@ public class StraitjacketPlugin : Plugin<Project> {
       // execution time, so there is no resolution hot path to memoise it for
       val failOnViolation =
         providers
-          .gradleProperty("straitjacket.failOnViolation")
-          .map(String::toBooleanStrictOrNull)
+          .booleanProperty("straitjacket.failOnViolation")
           .orElse(extension.failOnViolation)
           .orElse(true)
 
@@ -148,9 +144,4 @@ public class StraitjacketPlugin : Plugin<Project> {
 
   private fun Configuration.shouldBeChecked(ignoredConfigurations: Provider<GlobSet>): Boolean =
     isCanBeResolved && name !in ignoredConfigurations.get()
-
-  // Null leaves the provider absent, so a string naming no level falls back to the extension, as an
-  // unparseable boolean property does
-  private fun logLevelOrNull(string: String): LogLevel? =
-    LogLevel.entries.firstOrNull { level -> level.name.equals(string, ignoreCase = true) }
 }
