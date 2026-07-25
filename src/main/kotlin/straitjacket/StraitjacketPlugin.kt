@@ -19,8 +19,9 @@ public class StraitjacketPlugin : Plugin<Project> {
       val enabled =
         providers
           .gradleProperty("straitjacket.enabled")
-          .map(String::toBoolean)
-          .orElse(extension.enabled.convention(true))
+          .map(String::toBooleanStrictOrNull)
+          .orElse(extension.enabled)
+          .orElse(true)
 
       val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
       val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
