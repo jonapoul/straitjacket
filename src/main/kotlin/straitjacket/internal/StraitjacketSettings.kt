@@ -48,6 +48,19 @@ internal class StraitjacketSettings(project: Project, extension: StraitjacketExt
       enabled.zip(ignoredCatalogs) { isEnabled, ignored -> isEnabled && catalogName !in ignored }
     )
 
+  /**
+   * A property with `finalizeValueOnRead`, rather than the [Provider] chain it wraps.
+   *
+   * Gradle does not memoise a provider, and the substitution rule reads these once per dependency
+   * per catalog per resolution, so a plain `zip`/`map` chain re-evaluates the whole thing every
+   * time, recompiling the [GlobSet] patterns with it. A finalized property computes once and hands
+   * back the same value after that.
+   *
+   * [failOnViolation], [ignoredCatalogs] and [ignoredModules] stay plain chains deliberately: only
+   * the check tasks read them, once each, at execution time.
+   *
+   * `ResolutionRuleOverheadScenario` counts evaluations and fails if this is lost.
+   */
   private inline fun <reified T : Any> ObjectFactory.finalizedProperty(
     value: Provider<T>
   ): Provider<T> = property(T::class.java).value(value).apply { finalizeValueOnRead() }
