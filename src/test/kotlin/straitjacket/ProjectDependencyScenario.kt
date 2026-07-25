@@ -88,7 +88,7 @@ class ProjectDependencyScenario : StraitjacketScenarioTest() {
       assertThatTask(":printResolvedSub")
         .withoutConfigurationCache()
         .buildsSuccessfully()
-        .outputContains("RESOLVED_SUB=project :sub")
+        .outputContains("RESOLVED_SUB=project ':sub'")
         .outputDoesNotContain("com.example:sub:3.0.0")
     }
 }

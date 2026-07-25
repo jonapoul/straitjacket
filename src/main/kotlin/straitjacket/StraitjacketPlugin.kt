@@ -80,9 +80,13 @@ public class StraitjacketPlugin : Plugin<Project> {
         resolvableConfigs.configureEach { configuration ->
           // The name, not the Configuration, so the rule stays configuration cache friendly
           val configurationName = configuration.name
-          configuration.resolutionStrategy.eachDependency { details ->
+          // A substitution rule rather than eachDependency, because it is handed the selector
+          // itself. eachDependency only reports coordinates, and a project dependency reports the
+          // target project's own group, name and version, so there is no way to tell one from a
+          // module and forcing it substitutes the project for an unpublished module.
+          configuration.resolutionStrategy.dependencySubstitution.all { substitution ->
             if (active.get() && configurationName !in ignoredConfigurations.get()) {
-              details.applyRestriction(catalogName, catalogVersions)
+              substitution.applyRestriction(catalogName, catalogVersions)
             }
           }
         }
