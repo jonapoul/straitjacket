@@ -113,8 +113,10 @@ straitjacket {
   // build. Defaults to true.
   failOnViolation = true
 
-  // Exclude configurations (by name) from both forcing and checking.
+  // Exclude configurations (by name) from both forcing and checking. "*" matches any run
+  // of characters, so a single pattern can cover a whole family of generated names.
   ignoredConfigurations.add("someConfiguration")
+  ignoredConfigurations.add("*UnitTestRuntimeClasspath")
 
   // Exclude individual modules from both forcing and checking. "*" matches any run of
   // characters, so this covers one module, a whole group, or a name in any group.
@@ -127,6 +129,8 @@ straitjacket {
   ignoredCatalogs.add("someOtherLibs")
 }
 ```
+
+A configuration name without a `*` matches exactly, so patterns only ever widen what an entry covers. They're worth reaching for when the configurations you mean are generated per variant, as on Android, where `debugUnitTestRuntimeClasspath`, `releaseUnitTestRuntimeClasspath` and the rest would otherwise be a list to keep in sync with your variants.
 
 `ignoredModules` is usually the one you want when a single dependency is the problem. If a transitive drags `com.website:bar` above the catalog and you can't fix it today, ignoring the configuration it turned up in gives up on every other module that configuration resolves too. An ignored module is one Straitjacket stops managing altogether, so it isn't forced up either and resolves exactly as it would without the plugin. Everything outside a `*` is matched literally, so the dots in a group name aren't wildcards.
 

@@ -4,7 +4,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.provider.SetProperty
+import org.gradle.api.provider.Provider
 import straitjacket.internal.GlobSet
 import straitjacket.internal.applyRestriction
 import straitjacket.internal.buildAuthoritativeVersionMap
@@ -34,11 +34,14 @@ public class StraitjacketPlugin : Plugin<Project> {
           )
       enabled.finalizeValueOnRead()
 
-      val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
+      // Both compiled once, and held in a property rather than a plain value because the extension
+      // has not been configured yet at this point in apply
+      val ignoredConfigurations =
+        objects
+          .property(GlobSet::class.java)
+          .value(extension.ignoredConfigurations.convention(emptySet()).map(::GlobSet))
       ignoredConfigurations.finalizeValueOnRead()
 
-      // Compiled once for the same reason, and held in a property rather than a plain value because
-      // the extension has not been configured yet at this point in apply
       val ignoredModules =
         objects
           .property(GlobSet::class.java)
@@ -123,6 +126,6 @@ public class StraitjacketPlugin : Plugin<Project> {
       }
     }
 
-  private fun Configuration.shouldBeChecked(ignoredConfigurations: SetProperty<String>): Boolean =
+  private fun Configuration.shouldBeChecked(ignoredConfigurations: Provider<GlobSet>): Boolean =
     isCanBeResolved && name !in ignoredConfigurations.get()
 }

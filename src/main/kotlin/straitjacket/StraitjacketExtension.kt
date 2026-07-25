@@ -29,9 +29,24 @@ public interface StraitjacketExtension {
   public val failOnViolation: Property<Boolean>
 
   /**
-   * Excludes the given [org.gradle.api.artifacts.Configuration] names from both halves of
+   * Excludes the matching [org.gradle.api.artifacts.Configuration] names from both halves of
    * Straitjacket: dependencies resolved by those configurations are neither forced up to their
    * catalog version nor reported by the check tasks.
+   *
+   * Each entry is a configuration name, in which `*` stands for any run of characters:
+   * ```kotlin
+   * straitjacket {
+   *   ignoredConfigurations.add("someConfiguration")   // one configuration
+   *   ignoredConfigurations.add("*UnitTestRuntimeClasspath")   // every variant's, on Android
+   * }
+   * ```
+   *
+   * A name without a `*` matches exactly, so patterns only ever widen what an entry covers. Reach
+   * for them when the configurations you mean are generated per variant and enumerating them would
+   * mean keeping a list in sync with your variants.
+   *
+   * Prefer [ignoredModules] when a single dependency is the problem. Ignoring a configuration gives
+   * up on every other module it resolves too.
    */
   public val ignoredConfigurations: SetProperty<String>
 
