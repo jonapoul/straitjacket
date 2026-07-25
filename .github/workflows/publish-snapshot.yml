@@ -3,6 +3,8 @@ name: Publish snapshot
 on:
   push:
     branches: [ "main" ]
+  schedule:
+    - cron: '0 0 1 * *' # midnight UTC on the 1st of every month
   workflow_dispatch:
 
 permissions:
