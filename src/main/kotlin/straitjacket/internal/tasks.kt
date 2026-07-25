@@ -23,6 +23,7 @@ internal fun Project.registerPerCatalogCheckTask(
   authoritativeVersions: Provider<Map<String, List<String>>>,
   resolvedVersions: Provider<Map<String, Map<String, List<String>>>>,
   ignoredModules: Provider<Set<String>>,
+  failOnViolation: Provider<Boolean>,
   active: Provider<Boolean>,
 ): TaskProvider<StraitjacketCheck> {
   val taskName = "straitjacketCheck${catalogName.capitalized()}"
@@ -34,6 +35,7 @@ internal fun Project.registerPerCatalogCheckTask(
     t.authoritativeVersions.set(authoritativeVersions)
     t.resolvedVersions.set(resolvedVersions)
     t.ignoredModules.set(ignoredModules)
+    t.failOnViolation.set(failOnViolation)
     t.reportFile.set(layout.buildDirectory.file("reports/straitjacket/$catalogName.txt"))
     t.onlyIf { active.get() }
   }

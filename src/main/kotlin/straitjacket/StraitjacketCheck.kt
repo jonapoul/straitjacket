@@ -4,6 +4,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -31,6 +32,10 @@ public abstract class StraitjacketCheck : DefaultTask() {
   // "$group:$name" patterns, in which "*" stands for any run of characters, for modules this check
   // must not report however they resolve. The forcing side leaves the same modules alone.
   @get:Input public abstract val ignoredModules: SetProperty<String>
+
+  // Whether a violation fails the build or is only logged. An input so that turning it off reruns
+  // the task rather than leaving the report from a build that did fail.
+  @get:Input public abstract val failOnViolation: Property<Boolean>
 
   // Generated report file. If successful, this file will be created with no contents
   @get:OutputFile public abstract val reportFile: RegularFileProperty
@@ -81,10 +86,20 @@ public abstract class StraitjacketCheck : DefaultTask() {
         }
       }
 
-    reportFile.get().asFile.writeText(report)
+    val file = reportFile.get().asFile
+    file.writeText(report)
 
-    if (violations.isNotEmpty()) {
+    if (violations.isEmpty()) return
+
+    if (failOnViolation.get()) {
       throw GradleException(report)
+    } else {
+      // This task succeeds, so it is up to date on the next build and this warning is not logged
+      // again. Point at the report file, which is the record that survives.
+      logger.warn(
+        "$report\n\nNot failing the build because failOnViolation is off. " +
+          "See the Straitjacket report at ${file.absolutePath}"
+      )
     }
   }
 }

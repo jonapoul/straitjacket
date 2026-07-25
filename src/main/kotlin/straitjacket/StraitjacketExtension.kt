@@ -14,6 +14,21 @@ public interface StraitjacketExtension {
   public val enabled: Property<Boolean>
 
   /**
+   * Set to false to have the check tasks log their report at `WARN` and succeed, rather than fail
+   * the build. Defaults to true.
+   *
+   * Useful for adopting Straitjacket on a project that is not clean yet, where failing on day one
+   * is not an option but the drift still wants watching.
+   *
+   * A task that succeeds is up to date on the next build and does not log its warning again, so the
+   * report file is the record. It is written either way, and its path is in the warning.
+   *
+   * If the `straitjacket.failOnViolation` Gradle property is set to `true` or `false`, it takes
+   * priority over this value.
+   */
+  public val failOnViolation: Property<Boolean>
+
+  /**
    * Excludes the given [org.gradle.api.artifacts.Configuration] names from both halves of
    * Straitjacket: dependencies resolved by those configurations are neither forced up to their
    * catalog version nor reported by the check tasks.

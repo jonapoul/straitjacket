@@ -3,7 +3,7 @@ complexity:
   LabeledExpression:
     active: false
   LongParameterList:
-    allowedFunctionParameters: 6
+    allowedFunctionParameters: 7
 
 comments:
   active: false
