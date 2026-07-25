@@ -15,6 +15,7 @@ public abstract interface class straitjacket/StraitjacketExtension {
 	public abstract fun getIgnoredCatalogs ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getIgnoredConfigurations ()Lorg/gradle/api/provider/SetProperty;
 	public abstract fun getIgnoredModules ()Lorg/gradle/api/provider/SetProperty;
+	public abstract fun getLogForcedVersions ()Lorg/gradle/api/provider/Property;
 }
 
 public final class straitjacket/StraitjacketPlugin : org/gradle/api/Plugin {
