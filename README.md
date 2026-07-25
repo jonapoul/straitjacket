@@ -1,4 +1,4 @@
-# Straitjacket - Gradle Plugin
+# Straitjacket Gradle Plugin
 
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/></a>
@@ -6,23 +6,67 @@
   <a href="https://github.com/jonapoul/straitjacket"><img alt="Coverage" src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/jonapoul/995f996e31d24ad523bde9f758307d9a/raw/straightjacket-coverage.json"/></a>
 </p>
 
-## Introduction
+## The Problem
 
-Straitjacket keeps the dependency versions your build actually resolves in lockstep with the versions
-declared in your [Gradle version catalog(s)][catalogs]. Your `libs.versions.toml` already records the
-version you *intend* to use for each library — Straitjacket makes Gradle honour it.
+You have a multi-module Gradle project, with a `libs.versions.toml` dependency tracker file like:
 
-Once applied, for every resolvable configuration and every registered version catalog it:
+```toml
+[libraries]
+foo = { module = "com.website:foo", version = "1.2.3" }
+bar = { module = "com.website:bar", version = "2.3.4" }
+```
 
-- **Forces up** any dependency requested *below* its catalog version to the catalog version. If
-  something (yours or a transitive dependency) asks for an older version than the catalog declares,
-  it is bumped up, with Straitjacket recorded as the selection reason.
-- **Fails the build** if a dependency resolves to a version *newer* than the catalog declares — for
-  example because a transitive dependency dragged it up. This surfaces drift the moment it appears,
-  so the catalog stays the single source of truth instead of silently falling behind.
+and a module structure like:
 
-The net effect: the catalog version is treated as an exact pin rather than a "minimum", and you find
-out immediately when reality diverges from it.
+```
+:app
+├── :module-a
+│   └── com.website:foo:1.2.3
+│       └── com.website:bar:2.3.4
+└── :module-b
+    └── com.website:bar:2.3.4
+```
+
+Everything lines up with the catalog. Then `foo` puts out a 1.3.0 and you bump it:
+
+```toml
+foo = { module = "com.website:foo", version = "1.3.0" }
+```
+
+What you didn't notice is that `foo` 1.3.0 now depends on `bar` 2.5.0. Gradle's default conflict resolution picks the highest requested version across the whole graph, so this is what `:app` actually resolves:
+
+```
+:app
+├── :module-a
+│   └── com.website:foo:1.3.0
+│       └── com.website:bar:2.5.0        <-- catalog says 2.3.4
+└── :module-b
+    └── com.website:bar:2.3.4 -> 2.5.0   <-- and it drags :module-b up with it
+```
+
+Build `:module-b` on its own, though, and nothing in its graph asks for anything higher, so it resolves exactly what it declared:
+
+```
+:module-b
+└── com.website:bar:2.3.4
+```
+
+Nothing failed and nothing warned you, but two things are now wrong. Your catalog claims `bar` is on 2.3.4 when the thing you ship is running 2.5.0, so the file everyone treats as the source of truth has been superseded. And `:module-b` is now compiled and unit tested against a different version of `bar` than the one it runs against in production. Any test in `:module-b` that asserts 2.3.4 behaviour still passes, and tells you nothing about what actually ships.
+
+It happens in the other direction too. An old transitive dependency can request a version *below* what the catalog declares, and if nothing else in the graph pulls it back up, you quietly ship the older one.
+
+None of this is Gradle misbehaving. Version declarations are requests rather than commitments, and conflict resolution settles the difference without asking. That's usually what you want. It's less useful when you've gone to the effort of writing down a version in one place and expect that to be the version you get.
+
+## The Solution
+
+Straitjacket makes the catalog binding. Once applied, for every resolvable configuration and every registered [Gradle version catalog](https://docs.gradle.org/current/userguide/version_catalogs.html) it:
+
+- **Forces up** any dependency requested *below* its catalog version. If something (yours or a transitive dependency) asks for an older version than the catalog declares, it gets bumped, with Straitjacket recorded as the selection reason.
+- **Fails the build** if a dependency resolves to a version *newer* than the catalog declares, for example because a transitive dependency dragged it up. You find out about the drift straight away rather than letting the catalog quietly fall out of date.
+
+So the catalog version becomes an exact pin instead of a "minimum", and you hear about it as soon as reality disagrees. In the example above, the build stops the moment `foo` 1.3.0 drags `bar` up to 2.5.0, and you decide what to do about it: bump the catalog to 2.5.0 deliberately, or hold `foo` back.
+
+Note that the two halves happen at different times. Forcing up is part of dependency resolution, so it applies to every build. The newer-than-catalog check only runs when you run the check tasks below.
 
 ## Usage
 
@@ -35,9 +79,7 @@ plugins {
 }
 ```
 
-With no further configuration, Straitjacket acts on every resolvable configuration and every version
-catalog registered in the build. The forcing behaviour applies automatically during dependency
-resolution; the verification behaviour is exposed through check tasks.
+That's it. Out of the box, Straitjacket covers every resolvable configuration and every version catalog registered in the build. Forcing happens automatically while Gradle resolves dependencies, and the checks run as tasks.
 
 ### Tasks
 
@@ -46,17 +88,14 @@ resolution; the verification behaviour is exposed through check tasks.
 | `straitjacketCheck` | Aggregate task that runs every per-catalog check. |
 | `straitjacketCheck<Catalog>` | One task per catalog, e.g. `straitjacketCheckLibs` for `libs.versions.toml`. Fails if any dependency resolved newer than that catalog declares. |
 
-When the [`base` plugin][base] is applied (directly, or by most language plugins such as
-`kotlin("jvm")`), `straitjacketCheck` is wired into the standard `check` lifecycle task, so it runs
-as part of your normal build and CI verification.
+The `straitjacketCheck` task hooks into the standard `check` lifecycle task, so it runs as part of your normal build and CI verification. That wiring needs the `base` plugin, which you get for free from any of the usual language plugins such as `kotlin("jvm")`.
 
-Each per-catalog check writes a report to `build/reports/straitjacket/<catalog>.txt`. The file is
-empty when the check passes and lists the offending coordinates when it fails:
+Each per-catalog check writes a report to `build/reports/straitjacket/<catalog>.txt`. It's empty if the check passed, and lists the offending coordinates if it didn't:
 
 ```
 Straitjacket found dependencies resolved to versions newer than the version catalog declares:
 
-  com.squareup.okio:okio:3.16.0 -> 3.16.4 (in compileClasspath, runtimeClasspath)
+  com.website:bar:2.3.4 -> 2.5.0 (in compileClasspath, runtimeClasspath)
 
 Update your version catalog or add these configurations to ignoredConfigurations.
 ```
@@ -67,7 +106,7 @@ Configure the plugin through the `straitjacket` extension:
 
 ```kotlin
 straitjacket {
-  // Disable both the forcing and the checks entirely. Defaults to true.
+  // Set to false to turn off both the forcing and the checks. Defaults to true.
   enabled = true
 
   // Exclude configurations (by name) from both forcing and checking.
@@ -79,31 +118,19 @@ straitjacket {
 }
 ```
 
-To toggle Straitjacket from the command line or per environment, set the `straitjacket.enabled`
-Gradle property. It takes priority over the `enabled` extension value, so you can disable a one-off
-build without editing the build script:
+You can also flip it on or off with the `straitjacket.enabled` Gradle property. It wins over the `enabled` extension value, so you can skip a one-off build without touching the build script:
 
 ```
 ./gradlew build -Pstraitjacket.enabled=false
 ```
 
-The property can also live in `gradle.properties` (project or `~/.gradle`) for a more permanent
-per-environment default.
+Put it in `gradle.properties` (project or `~/.gradle`) if you want that to be the default for a given machine or environment.
 
 ### Notes
 
-- Only **resolvable** configurations are considered (those Gradle can resolve to a concrete set of
-  artifacts), so configurations such as `implementation` and `api` are checked via the classpath
-  configurations they feed into.
-- Version comparison follows [Semantic Versioning][semver] precedence (including pre-release
-  ordering such as `1.0.0-alpha` < `1.0.0`). Build metadata (`+...`) is not stripped and may
-  compare incorrectly, so avoid relying on it in catalog versions.
-- The plugin is compatible with Gradle's [configuration cache][cc].
-
-[base]: https://docs.gradle.org/current/userguide/base_plugin.html
-[catalogs]: https://docs.gradle.org/current/userguide/version_catalogs.html
-[cc]: https://docs.gradle.org/current/userguide/configuration_cache.html
-[semver]: https://semver.org/
+- Only **resolvable** configurations are looked at, meaning ones Gradle can resolve to a concrete set of artifacts. `implementation` and `api` get covered via the classpath configurations they feed into.
+- Versions are compared using [Semantic Versioning](https://semver.org/) precedence, including pre-release ordering like `1.0.0-alpha` < `1.0.0`. Build metadata (`+...`) isn't stripped out and can compare wrongly, so don't rely on it in catalog versions.
+- The plugin is compatible with Gradle's [configuration cache](https://docs.gradle.org/current/userguide/configuration_cache.html).
 
 ## License
 
