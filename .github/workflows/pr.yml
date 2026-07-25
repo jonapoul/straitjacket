@@ -203,18 +203,23 @@ jobs:
             PR NUMBER: ${{ github.event.pull_request.number }}
 
             **Code Review**:
-            Use `gh pr diff $PR_NUMBER` to get the diff, then submit a review with inline comments on specific lines where you find:
+            Use `gh pr diff $PR_NUMBER` to get the diff and look for:
             - Potential bugs or issues
             - Performance concerns
             - Security concerns
             - Missing test coverage
 
-            Submit a review using:
+            **Silence is the default.** If you found nothing that needs addressing, post nothing at
+            all: no review, no summary, no "LGTM", no "no issues found", no approval. Just stop and
+            end your turn without calling any tool. Most PRs should end this way. Never post a review
+            whose only purpose is to say the code is fine.
+
+            Only if you found something that genuinely should be changed, post a single review:
                gh api repos/$REPO/pulls/$PR_NUMBER/reviews -f event=COMMENT -f body="Review summary" -f 'comments[][path]=file.kt' -f 'comments[][line]=42' -f 'comments[][body]=Your comment'
 
-            Keep comments brief and actionable.
-
-            *IMPORTANT* Only leave a comment if something should be addressed — don't leave praise or nitpicks. To clarify: if you have nothing to say besides "LGTM", **DO NOT LEAVE A COMMENT AT ALL**
+            Every comment must be an actionable change. No praise, no nitpicks, no restating what the
+            diff does. The body should be one line of context, not a summary of the PR. If your draft
+            review would read as approval, discard it and post nothing.
 
             Use the repository's CLAUDE.md for guidance on style and conventions.
           claude_args: '--allowed-tools "Bash(gh api:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
