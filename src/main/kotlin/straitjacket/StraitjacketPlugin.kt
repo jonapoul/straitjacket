@@ -29,7 +29,7 @@ public class StraitjacketPlugin : Plugin<Project> {
               .orElse(extension.enabled)
               .orElse(true)
           )
-          .apply { finalizeValueOnRead() }
+      enabled.finalizeValueOnRead()
 
       val ignoredConfigurations = extension.ignoredConfigurations.convention(emptySet())
       val ignoredCatalogs = extension.ignoredCatalogs.convention(emptySet())
@@ -70,7 +70,7 @@ public class StraitjacketPlugin : Plugin<Project> {
                 isEnabled && catalogName !in ignored
               }
             )
-            .apply { finalizeValueOnRead() }
+        active.finalizeValueOnRead()
 
         matchingConfigs.configureEach { configuration ->
           configuration.resolutionStrategy.eachDependency { details ->
