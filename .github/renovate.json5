@@ -9,14 +9,13 @@
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
-      // Check for GitHub Actions updates once a month (first Monday),
-      // grouped into a single PR
+      // Every Monday, grouped into a single PR
       "matchManagers": [
         "github-actions"
       ],
       "groupName": "github-actions",
       "schedule": [
-        "* * 1-7 * 1"
+        "* * * * 1"
       ]
     }
   ]
