@@ -33,6 +33,7 @@ dependencies {
   testImplementation(libs.assertk)
   testImplementation(libs.blueprintAssertk)
   testPluginClasspath(kotlin("gradle-plugin"))
+  testPluginClasspath(libs.dependencyGuard)
   testRuntimeOnly(libs.junit.launcher)
 }
 
