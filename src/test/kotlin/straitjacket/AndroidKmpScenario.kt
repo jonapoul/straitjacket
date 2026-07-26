@@ -23,9 +23,9 @@ import straitjacket.test.withoutConfigurationCache
  * classpaths are per compilation rather than per variant and a dependency declared once in
  * `commonMain` has to be forced in all of them.
  *
- * [AndroidApisScenario] uses the same plugin for a different reason - a bug in the check's walk
- * that only AGP's KMP plugin reaches - and deliberately says nothing about forcing. It skips where
- * there is no Android SDK.
+ * [AndroidConfigurationCreatedDuringResolutionScenario] uses the same plugin to pin something else
+ * entirely, a bug in the check's walk that only AGP's KMP plugin reaches, and deliberately says
+ * nothing about forcing. It skips where there is no Android SDK.
  */
 @RequiresAndroidSdk
 class AndroidKmpScenario : StraitjacketScenarioTest() {

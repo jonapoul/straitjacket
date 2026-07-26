@@ -39,7 +39,7 @@ import straitjacket.test.settingsGradleKts
  * synthetic scenario is what keeps holding the line. It skips where there is no Android SDK.
  */
 @RequiresAndroidSdk
-class AndroidApisScenario : StraitjacketScenarioTest() {
+class AndroidConfigurationCreatedDuringResolutionScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
     settingsGradleKts()
 

@@ -56,7 +56,7 @@ internal fun Project.registerPerCatalogCheckTask(
  * `ConcurrentModificationException`. AGP creates `androidApis` exactly that way. The snapshot has
  * to be taken here rather than beside the `matching` call, or the filter spec runs before the build
  * script has configured the extension. `ConfigurationCreatedDuringResolutionScenario` and
- * `AndroidApisScenario` pin this.
+ * `AndroidConfigurationCreatedDuringResolutionScenario` pin this.
  */
 internal fun Project.resolvedVersions(
   ignoredConfigurations: Provider<GlobSet>
