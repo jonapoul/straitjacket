@@ -18,3 +18,6 @@ internal fun FileTree.Builder.libsVersionsToml(@Language("toml") contents: Strin
 
 internal fun FileTree.Builder.gradleProperties(@Language("properties") contents: String) =
   "gradle.properties"(contents)
+
+internal fun FileTree.Builder.localProperties(@Language("properties") contents: String) =
+  "local.properties"(contents)
