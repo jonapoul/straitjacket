@@ -4,12 +4,13 @@ import blueprint.test.assertThatTask
 import blueprint.test.buildsSuccessfully
 import blueprint.test.outputContains
 import kotlin.test.Test
-import straitjacket.test.ANDROID_SDK
+import straitjacket.test.COMPILE_SDK
+import straitjacket.test.MIN_SDK
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.androidLocalProperties
 import straitjacket.test.buildGradleKts
 import straitjacket.test.libsVersionsToml
-import straitjacket.test.localProperties
 import straitjacket.test.settingsGradleKts
 
 /**
@@ -42,12 +43,7 @@ class AndroidApisScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
     settingsGradleKts()
 
-    localProperties(
-      """
-      sdk.dir=${ANDROID_SDK.invariantSeparatorsPath}
-      """
-        .trimIndent()
-    )
+    androidLocalProperties()
 
     buildGradleKts(
       """
@@ -95,8 +91,3 @@ class AndroidApisScenario : StraitjacketScenarioTest() {
       .outputContains("Configuration cache entry stored.")
   }
 }
-
-// Nothing here compiles Android sources, so these only have to be values AGP will accept and any
-// SDK the tests could run against will have.
-private const val COMPILE_SDK = 36
-private const val MIN_SDK = 28
