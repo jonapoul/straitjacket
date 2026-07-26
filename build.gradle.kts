@@ -3,6 +3,7 @@
 import app.cash.licensee.UnusedAction.IGNORE
 import blueprint.core.javaVersion
 import blueprint.core.jvmTarget
+import blueprint.core.localProperties
 import dev.detekt.gradle.Detekt
 import org.gradle.api.attributes.plugin.GradlePluginApiVersion.GRADLE_PLUGIN_API_VERSION_ATTRIBUTE
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
@@ -33,6 +34,7 @@ dependencies {
   testImplementation(libs.assertk)
   testImplementation(libs.blueprintAssertk)
   testPluginClasspath(kotlin("gradle-plugin"))
+  testPluginClasspath(libs.agp)
   testPluginClasspath(libs.dependencyGuard)
   testRuntimeOnly(libs.junit.launcher)
 }
@@ -118,7 +120,24 @@ buildConfig {
   sourceSets.named("test") {
     packageName.set("straitjacket.test")
     useKotlinOutput { topLevelConstants = true }
-    buildConfigField("GRADLE_VERSION", GradleVersion.current().version)
+
+    buildConfigField(name = "GRADLE_VERSION", value = GradleVersion.current().version)
+
+    buildConfigField(
+      name = "ANDROID_SDK",
+      value =
+        providers
+          .environmentVariable("ANDROID_HOME")
+          .orElse(providers.environmentVariable("ANDROID_SDK_ROOT"))
+          .orElse(localProperties().map { props -> props["sdk.dir"] })
+          .orElse("")
+          .map(::File),
+    )
+
+    buildConfigField(
+      name = "CI",
+      value = providers.environmentVariable("CI").map(String::toBoolean).orElse(false),
+    )
   }
 }
 

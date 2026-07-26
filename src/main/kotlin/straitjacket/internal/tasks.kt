@@ -1,6 +1,5 @@
 package straitjacket.internal
 
-import org.gradle.api.NamedDomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
@@ -50,6 +49,14 @@ internal fun Project.registerPerCatalogCheckTask(
  * Unlike the forcing side, this can match on [ignoredConfigurations] as well as on
  * `isCanBeResolved`, because the collection is only iterated at execution time, by when the build
  * script has configured the extension.
+ *
+ * The [toList] is what makes that iteration safe. `matching` is a live view of the project's
+ * configuration container, and the walk resolves from inside it, so a configuration created by one
+ * of those resolutions invalidates the iterator and the walk dies with a
+ * `ConcurrentModificationException`. AGP creates `androidApis` exactly that way. The snapshot has
+ * to be taken here rather than beside the `matching` call, or the filter spec runs before the build
+ * script has configured the extension. `ConfigurationCreatedDuringResolutionScenario` and
+ * `AndroidApisScenario` pin this.
  */
 internal fun Project.resolvedVersions(
   ignoredConfigurations: Provider<GlobSet>
@@ -57,7 +64,7 @@ internal fun Project.resolvedVersions(
   val checkedConfigs = configurations.matching { c ->
     c.isCanBeResolved && c.name !in ignoredConfigurations.get()
   }
-  val resolved = lazy { buildResolvedVersionMap(checkedConfigs) }
+  val resolved = lazy { buildResolvedVersionMap(checkedConfigs.toList()) }
   return provider { resolved.value }
 }
 
@@ -73,7 +80,7 @@ internal fun Project.resolvedVersions(
  * declares, so neither remedy the check suggests could act on it.
  */
 private fun buildResolvedVersionMap(
-  checkedConfigs: NamedDomainObjectSet<Configuration>
+  checkedConfigs: List<Configuration>
 ): Map<String, Map<String, List<String>>> {
   val configs = mutableMapOf<String, MutableMap<String, MutableSet<String>>>()
   checkedConfigs.forEach { config ->
