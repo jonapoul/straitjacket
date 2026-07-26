@@ -20,7 +20,8 @@ import straitjacket.test.settingsGradleKts
  *
  * `compileClasspath` is the earliest resolvable configuration the walk reaches, so the iterator
  * still has elements left when the container changes underneath it. The `beforeResolve` hook stands
- * in for AGP, which creates `androidApis` that way; [AndroidApisScenario] is the real-AGP twin.
+ * in for AGP, which creates `androidApis` that way;
+ * [AndroidConfigurationCreatedDuringResolutionScenario] is the real-AGP twin.
  *
  * The configuration cache is not the cause, only where it surfaces: `resolvedVersions` is an
  * `@Input`, so the walk runs while the task graph is stored. It breaks the same way at execution
