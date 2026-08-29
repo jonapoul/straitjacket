@@ -1,22 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "github>jonapoul/renovate-config:default.json5",
+  ],
   "labels": [
     "dependencies"
   ],
-  "extends": [
-    "config:best-practices"
-  ],
-  "minimumReleaseAge": "3 days",
   "packageRules": [
-    {
-      // Every Monday, grouped into a single PR
-      "matchManagers": [
-        "github-actions"
-      ],
-      "groupName": "github-actions",
-      "schedule": [
-        "* * * * 1"
-      ]
-    }
+    // TBC
   ]
 }
