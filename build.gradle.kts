@@ -11,6 +11,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED
 import org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   alias(libs.plugins.blueprint.core) apply false
@@ -139,6 +140,10 @@ buildConfig {
       value = providers.environmentVariable("CI").map(String::toBoolean).orElse(false),
     )
   }
+}
+
+tasks.register("compileAll") {
+  dependsOn(tasks.withType(KotlinCompile::class))
 }
 
 tasks.withType(Test::class).configureEach {
