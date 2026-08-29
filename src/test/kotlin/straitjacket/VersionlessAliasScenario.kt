@@ -1,16 +1,17 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.withoutConfigurationCache
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * A catalog entry may legally declare a module with no version, leaving the version to a platform
@@ -69,7 +70,7 @@ class VersionlessAliasScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a module declared without a version does not fail the check`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       // An empty version leaking into the map shows up as a violation with nothing before the

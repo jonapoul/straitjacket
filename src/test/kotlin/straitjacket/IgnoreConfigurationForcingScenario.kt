@@ -1,16 +1,16 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
+import blueprint.test.withGradleProperty
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.withGradleProperty
-import straitjacket.test.withoutConfigurationCache
 
 /**
  * A dependency older than the catalog lives only in a custom resolvable configuration, so whether
@@ -72,7 +72,7 @@ class IgnoreConfigurationForcingScenario : StraitjacketScenarioTest() {
     // Resolving in doLast is not configuration cache compatible, so opt out of the harness default
     assertThatTask(":printResolvedOkio")
       .withoutConfigurationCache()
-      .withGradleProperty("ignore", true)
+      .withGradleProperty(name = "ignore", value = true)
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.6.0")
       .outputDoesNotContain("RESOLVED_OKIO=3.16.0")
@@ -82,7 +82,7 @@ class IgnoreConfigurationForcingScenario : StraitjacketScenarioTest() {
   fun `an older dependency in a non-ignored configuration is forced up`() = runScenario {
     assertThatTask(":printResolvedOkio")
       .withoutConfigurationCache()
-      .withGradleProperty("ignore", false)
+      .withGradleProperty(name = "ignore", value = false)
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.16.0")
       .outputDoesNotContain("RESOLVED_OKIO=3.6.0")

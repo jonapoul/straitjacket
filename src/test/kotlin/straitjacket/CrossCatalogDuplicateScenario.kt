@@ -2,18 +2,20 @@ package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
-import blueprint.test.taskSucceeded
+import blueprint.test.settingsGradleKts
+import blueprint.test.tasksSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withGradleProperty
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withoutConfigurationCache
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * Two catalogs can declare the same module at different versions. Straitjacket registers a
@@ -95,7 +97,8 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the highest version wins when the catalog registered last declares it`() = runScenario {
-    assertThatTask(":printResolvedOkio", "-PotherOkioVersion=3.16.0")
+    assertThatTask(":printResolvedOkio")
+      .withGradleProperty(name = "otherOkioVersion", value = "3.16.0")
       .withoutConfigurationCache()
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.16.0")
@@ -104,7 +107,8 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the highest version wins when the catalog registered first declares it`() = runScenario {
-    assertThatTask(":printResolvedOkio", "-PotherOkioVersion=3.1.0")
+    assertThatTask(":printResolvedOkio")
+      .withGradleProperty(name = "otherOkioVersion", value = "3.1.0")
       .withoutConfigurationCache()
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.6.0")
@@ -114,19 +118,19 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   @Test
   fun `every catalog passes the check when the catalog registered last declares the highest`() =
     runScenario {
-      assertThatTask(":straitjacketCheck", "-PotherOkioVersion=3.16.0")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
+        .withGradleProperty(name = "otherOkioVersion", value = "3.16.0")
         .buildsSuccessfully()
-        .taskSucceeded(":straitjacketCheckLibs")
-        .taskSucceeded(":straitjacketCheckSomeOtherLibs")
+        .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheckSomeOtherLibs")
     }
 
   @Test
   fun `every catalog passes the check when the catalog registered first declares the highest`() =
     runScenario {
-      assertThatTask(":straitjacketCheck", "-PotherOkioVersion=3.1.0")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
+        .withGradleProperty(name = "otherOkioVersion", value = "3.1.0")
         .buildsSuccessfully()
-        .taskSucceeded(":straitjacketCheckLibs")
-        .taskSucceeded(":straitjacketCheckSomeOtherLibs")
+        .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheckSomeOtherLibs")
     }
 
   // 3.16.4 is above every version either catalog declares, so nothing is forced and the violation
@@ -139,7 +143,9 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   // of its own catalog, so the message names where the version came from.
   @Test
   fun `a violation is reported against the highest version any catalog declares`() = runScenario {
-    assertThatTask(":straitjacketCheckLibs", "-PotherOkioVersion=3.16.0", "-PokioVersion=3.16.4")
+    assertThatTaskWithConfigurationCache(":straitjacketCheckLibs")
+      .withGradleProperty(name = "otherOkioVersion", value = "3.16.0")
+      .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()
       .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")
       .trimmedOutputContains(

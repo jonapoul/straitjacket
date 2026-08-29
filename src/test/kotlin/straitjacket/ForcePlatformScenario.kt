@@ -1,14 +1,14 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
+import blueprint.test.settingsGradleKts
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.withoutConfigurationCache
 
 // A platform is a plain module with Category=platform on its selector, so a replacement built from
 // coordinates alone goes looking for a library variant the BOM does not have. Test fixtures carry

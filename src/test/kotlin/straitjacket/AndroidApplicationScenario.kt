@@ -1,11 +1,16 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.COMPILE_SDK
 import straitjacket.test.MIN_SDK
@@ -13,11 +18,7 @@ import straitjacket.test.PRINT_RESOLVED_OKIO
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.androidLocalProperties
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withoutConfigurationCache
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * [AndroidLibraryScenario] for an application module. An application resolves a runtime classpath
@@ -74,7 +75,7 @@ class AndroidApplicationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the check passes`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       .outputContains("Configuration cache entry stored.")
@@ -115,7 +116,7 @@ class AndroidApplicationScenario : StraitjacketScenarioTest() {
 
       // The full `(in ...)` list is every resolvable configuration AGP registers, which is not
       // worth pinning here, so this only asserts the per-variant ones are among them.
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .failsBuild()
         .trimmedOutputContains(
           "> Task :straitjacketCheckLibs FAILED",

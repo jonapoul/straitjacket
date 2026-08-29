@@ -1,15 +1,16 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
+import blueprint.test.withGradleProperty
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.withoutConfigurationCache
 
 /**
  * okio is requested below the catalog in a custom configuration, so whether Straitjacket forces it
@@ -72,7 +73,8 @@ class IgnoreConfigurationPatternForcingScenario : StraitjacketScenarioTest() {
   @Test
   fun `a configuration matched by a pattern is not forced up`() = runScenario {
     // Resolving in doLast is not configuration cache compatible, so opt out of the harness default
-    assertThatTask(":printResolvedOkio", "-Pignore=*UnitTestRuntime")
+    assertThatTask(":printResolvedOkio")
+      .withGradleProperty(name = "ignore", value = "*UnitTestRuntime")
       .withoutConfigurationCache()
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.6.0")
@@ -81,7 +83,8 @@ class IgnoreConfigurationPatternForcingScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a configuration no pattern covers is still forced up`() = runScenario {
-    assertThatTask(":printResolvedOkio", "-Pignore=*AndroidTest*")
+    assertThatTask(":printResolvedOkio")
+      .withGradleProperty(name = "ignore", value = "*AndroidTest*")
       .withoutConfigurationCache()
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.16.0")

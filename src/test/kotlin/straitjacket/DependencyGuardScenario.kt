@@ -3,19 +3,21 @@ package straitjacket
 import assertk.assertThat
 import assertk.assertions.doesNotContain
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
-import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskFailed
 import blueprint.test.taskSucceeded
+import blueprint.test.tasksSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withArgument
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
+import straitjacket.test.assertThatTaskWithConfigurationCache
 import straitjacket.test.contains
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withGradleProperty
 
 /**
  * Dependency Guard records the versions a configuration resolves to, so the two plugins look at the
@@ -69,7 +71,7 @@ class DependencyGuardScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the baseline records the version straitjacket forced`() = runScenario {
-    assertThatTask(":lib:dependencyGuardBaseline").buildsSuccessfully()
+    assertThatTaskWithConfigurationCache(":lib:dependencyGuardBaseline").buildsSuccessfully()
 
     val baseline = rootDir.resolve("lib/dependencies/runtimeClasspath.txt").readText()
     assertThat(baseline, name = "baseline")
@@ -79,13 +81,15 @@ class DependencyGuardScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `both checks pass in the same build`() = runScenario {
-    assertThatTask(":lib:dependencyGuardBaseline").buildsSuccessfully()
+    assertThatTaskWithConfigurationCache(":lib:dependencyGuardBaseline").buildsSuccessfully()
 
-    assertThatTask(":lib:check")
+    assertThatTaskWithConfigurationCache(":lib:check")
       .buildsSuccessfully()
-      .taskSucceeded(":lib:dependencyGuard")
-      .taskSucceeded(":lib:straitjacketCheck")
-      .taskSucceeded(":lib:straitjacketCheckLibs")
+      .tasksSucceeded(
+        ":lib:dependencyGuard",
+        ":lib:straitjacketCheck",
+        ":lib:straitjacketCheckLibs",
+      )
   }
 
   /**
@@ -97,11 +101,11 @@ class DependencyGuardScenario : StraitjacketScenarioTest() {
   @Test
   fun `a baseline recorded with straitjacket disabled fails the dependency guard check`() =
     runScenario {
-      assertThatTask(":lib:dependencyGuardBaseline")
+      assertThatTaskWithConfigurationCache(":lib:dependencyGuardBaseline")
         .withGradleProperty("straitjacket.enabled", false)
         .buildsSuccessfully()
 
-      assertThatTask(":lib:dependencyGuard")
+      assertThatTaskWithConfigurationCache(":lib:dependencyGuard")
         .withGradleProperty("straitjacket.enabled", true)
         .failsBuild()
         .trimmedOutputContains("- com.squareup.okio:okio:3.6.0", "+ com.squareup.okio:okio:3.16.0")
@@ -128,11 +132,12 @@ class DependencyGuardScenario : StraitjacketScenarioTest() {
             .trimIndent()
         )
 
-      assertThatTask(":lib:dependencyGuardBaseline").buildsSuccessfully()
+      assertThatTaskWithConfigurationCache(":lib:dependencyGuardBaseline").buildsSuccessfully()
 
       // Both tasks hang off check, and without --continue the build stops at the first one to
       // fail, so whether Dependency Guard ran at all would come down to task ordering.
-      assertThatTask(":lib:check", "--continue")
+      assertThatTaskWithConfigurationCache(":lib:check")
+        .withArgument("--continue")
         .failsBuild()
         .taskFailed(":lib:straitjacketCheckLibs")
         .taskSucceeded(":lib:dependencyGuard")

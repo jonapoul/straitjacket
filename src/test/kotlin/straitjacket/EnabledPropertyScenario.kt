@@ -1,17 +1,18 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskFailed
+import blueprint.test.tasksWereSkipped
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withArgument
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.tasksSkipped
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withGradleProperty
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 class EnabledPropertyScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -47,14 +48,14 @@ class EnabledPropertyScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the extension value applies when no Gradle property is set`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
-      .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
+      .tasksWereSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 
   @Test
   fun `the Gradle property enables the plugin even when the extension disables it`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty("straitjacket.enabled", true)
       .failsBuild()
       .taskFailed(":straitjacketCheckLibs")
@@ -72,10 +73,10 @@ class EnabledPropertyScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the Gradle property disables the plugin overriding the extension`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty("straitjacket.enabled", false)
       .buildsSuccessfully()
-      .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
+      .tasksWereSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 
   /**
@@ -85,7 +86,8 @@ class EnabledPropertyScenario : StraitjacketScenarioTest() {
   @Test
   fun `a non-boolean string for the property fails the build`() = runScenario {
     listOf("", "not-a-bool", "1", "0", "TRUE", " true", "true ").forEach { enabledProperty ->
-      assertThatTask(":straitjacketCheck", "--rerun-tasks")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
+        .withArgument("--rerun-tasks")
         .withGradleProperty(name = "straitjacket.enabled", value = enabledProperty)
         .failsBuild()
         .trimmedOutputContains(

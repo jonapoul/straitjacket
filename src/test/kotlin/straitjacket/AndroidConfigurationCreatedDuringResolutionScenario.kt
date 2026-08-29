@@ -1,17 +1,17 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
+import blueprint.test.settingsGradleKts
 import kotlin.test.Test
 import straitjacket.test.COMPILE_SDK
 import straitjacket.test.MIN_SDK
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.androidLocalProperties
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * The real-AGP twin of [ConfigurationCreatedDuringResolutionScenario], which reproduces the same
@@ -86,7 +86,7 @@ class AndroidConfigurationCreatedDuringResolutionScenario : StraitjacketScenario
 
   @Test
   fun `the check survives AGP creating androidApis mid-resolution`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .outputContains("Configuration cache entry stored.")
   }
