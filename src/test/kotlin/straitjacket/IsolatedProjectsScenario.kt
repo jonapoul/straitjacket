@@ -1,7 +1,6 @@
 package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
@@ -15,6 +14,7 @@ import blueprint.test.taskSucceeded
 import blueprint.test.trimmedOutputContains
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 class IsolatedProjectsScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -77,7 +77,7 @@ class IsolatedProjectsScenario : StraitjacketScenarioTest() {
   // pass without isolated projects ever having been on.
   @Test
   fun `checks run in every module under isolated projects`() = runScenario {
-    assertThatTask("straitjacketCheck")
+    assertThatTaskWithConfigurationCache("straitjacketCheck")
       .failsBuild()
       .outputContains("Isolated Projects is an incubating feature.")
       .taskSucceeded(":good:straitjacketCheckLibs")
@@ -87,7 +87,7 @@ class IsolatedProjectsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a violation names only the offending module`() = runScenario {
-    assertThatTask(":bad:straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":bad:straitjacketCheck")
       .failsBuild()
       .trimmedOutputContains(
         """
@@ -109,12 +109,12 @@ class IsolatedProjectsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a compliant module passes and its configuration cache entry is reusable`() = runScenario {
-    assertThatTask(":good:straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":good:straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":good:straitjacketCheckLibs")
       .outputContains("Configuration cache entry stored.")
 
-    assertThatTask(":good:straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":good:straitjacketCheck")
       .buildsSuccessfully()
       .outputContains("Reusing configuration cache.")
   }

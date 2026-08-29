@@ -15,6 +15,7 @@ import blueprint.test.withGradleProperty
 import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * Two catalogs can declare the same module at different versions. Straitjacket registers a
@@ -117,7 +118,7 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   @Test
   fun `every catalog passes the check when the catalog registered last declares the highest`() =
     runScenario {
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .withGradleProperty(name = "otherOkioVersion", value = "3.16.0")
         .buildsSuccessfully()
         .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheckSomeOtherLibs")
@@ -126,7 +127,7 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   @Test
   fun `every catalog passes the check when the catalog registered first declares the highest`() =
     runScenario {
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .withGradleProperty(name = "otherOkioVersion", value = "3.1.0")
         .buildsSuccessfully()
         .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheckSomeOtherLibs")
@@ -142,7 +143,7 @@ class CrossCatalogDuplicateScenario : StraitjacketScenarioTest() {
   // of its own catalog, so the message names where the version came from.
   @Test
   fun `a violation is reported against the highest version any catalog declares`() = runScenario {
-    assertThatTask(":straitjacketCheckLibs")
+    assertThatTaskWithConfigurationCache(":straitjacketCheckLibs")
       .withGradleProperty(name = "otherOkioVersion", value = "3.16.0")
       .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()

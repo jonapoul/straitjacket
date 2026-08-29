@@ -18,6 +18,7 @@ import straitjacket.test.PRINT_RESOLVED_OKIO
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.androidLocalProperties
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * [AndroidLibraryScenario] for an application module. An application resolves a runtime classpath
@@ -74,7 +75,7 @@ class AndroidApplicationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the check passes`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       .outputContains("Configuration cache entry stored.")
@@ -115,7 +116,7 @@ class AndroidApplicationScenario : StraitjacketScenarioTest() {
 
       // The full `(in ...)` list is every resolvable configuration AGP registers, which is not
       // worth pinning here, so this only asserts the per-variant ones are among them.
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .failsBuild()
         .trimmedOutputContains(
           "> Task :straitjacketCheckLibs FAILED",

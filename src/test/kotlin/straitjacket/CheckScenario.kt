@@ -1,6 +1,5 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
@@ -12,6 +11,7 @@ import blueprint.test.trimmedOutputContains
 import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 class CheckScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -48,7 +48,7 @@ class CheckScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a directly requested older version passes the check`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "okioVersion", value = "3.6.0")
       .buildsSuccessfully()
       .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheck")
@@ -56,7 +56,7 @@ class CheckScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a directly requested newer version fails the check`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()
       .trimmedOutputContains(
@@ -78,7 +78,7 @@ class CheckScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `disabling the plugin skips the checks even for a newer version`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .withGradleProperty(name = "straitjacketEnabled", value = false)
       .buildsSuccessfully()

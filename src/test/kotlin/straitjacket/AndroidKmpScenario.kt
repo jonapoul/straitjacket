@@ -17,6 +17,7 @@ import straitjacket.test.PRINT_RESOLVED_OKIO
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.androidLocalProperties
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * [AndroidLibraryScenario] for a KMP module with an Android target alongside a JVM one, where the
@@ -72,7 +73,7 @@ class AndroidKmpScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the check passes`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       .outputContains("Configuration cache entry stored.")

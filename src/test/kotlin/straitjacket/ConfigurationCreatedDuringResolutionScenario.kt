@@ -1,6 +1,5 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.libsVersionsToml
@@ -8,6 +7,7 @@ import blueprint.test.outputContains
 import blueprint.test.settingsGradleKts
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * A configuration created while another one resolves must not break the check.
@@ -66,7 +66,7 @@ class ConfigurationCreatedDuringResolutionScenario : StraitjacketScenarioTest() 
 
   @Test
   fun `a configuration created during resolution does not break the check`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .outputContains("Configuration cache entry stored.")
   }

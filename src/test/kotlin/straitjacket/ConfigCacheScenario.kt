@@ -1,6 +1,5 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.libsVersionsToml
@@ -8,6 +7,7 @@ import blueprint.test.outputContains
 import blueprint.test.settingsGradleKts
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 class ConfigCacheScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -41,11 +41,11 @@ class ConfigCacheScenario : StraitjacketScenarioTest() {
   // fail the build by default). Running the task a second time then proves the entry can be reused.
   @Test
   fun `check is compatible with the configuration cache`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .outputContains("Configuration cache entry stored.")
 
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .outputContains("Reusing configuration cache.")
   }

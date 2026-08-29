@@ -1,6 +1,5 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
@@ -13,6 +12,7 @@ import blueprint.test.withArgument
 import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * okio is requested below its catalog version and so is forced up, and okhttp is requested at
@@ -66,14 +66,14 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `forcing is silent when no level is set`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .buildsSuccessfully()
       .outputDoesNotContain("Straitjacket forced")
   }
 
   @Test
   fun `a forced dependency is logged at the level set`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "LIFECYCLE")
       .buildsSuccessfully()
       .outputContains(
@@ -87,7 +87,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
    */
   @Test
   fun `a level below lifecycle stays out of a normal build`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "INFO")
       .buildsSuccessfully()
       .outputDoesNotContain("Straitjacket forced")
@@ -95,7 +95,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a level below lifecycle shows when the build asks for it`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "INFO")
       .withArgument("--info")
       .buildsSuccessfully()
@@ -105,7 +105,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
   /** Every configuration that resolved it says so, rather than the first one to get there. */
   @Test
   fun `a force is logged against each configuration that resolved it`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "LIFECYCLE")
       .buildsSuccessfully()
       .outputContains(
@@ -119,7 +119,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
   /** Only an actual force is worth a line, not every dependency the catalog happens to declare. */
   @Test
   fun `a dependency already at its catalog version is not logged`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "LIFECYCLE")
       .buildsSuccessfully()
       .outputContains("Straitjacket forced com.squareup.okio:okio")
@@ -129,7 +129,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
   /** Backs the claim in the KDoc that this is how you opt out of an inherited level. */
   @Test
   fun `unset silences a level already set`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "LIFECYCLE")
       .withGradleProperty(name = "unset", value = true)
       .buildsSuccessfully()
@@ -138,7 +138,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the Gradle property sets a level over the extension`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "straitjacket.logForcedVersions", value = "LIFECYCLE")
       .buildsSuccessfully()
       .outputContains("Straitjacket forced com.squareup.okio:okio 3.6.0 -> 3.16.0")
@@ -146,7 +146,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the Gradle property quietens a level the extension set`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "level", value = "LIFECYCLE")
       .withGradleProperty(name = "straitjacket.logForcedVersions", value = "INFO")
       .buildsSuccessfully()
@@ -156,7 +156,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
   @Test
   fun `the Gradle property is matched to a level without regard to case`() = runScenario {
     listOf("lifecycle", "LiFeCyClE").forEach { property ->
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .withArgument("--rerun-tasks")
         .withGradleProperty(name = "level", value = "INFO")
         .withGradleProperty(name = "straitjacket.logForcedVersions", value = property)
@@ -174,7 +174,7 @@ class LogForcedVersionsScenario : StraitjacketScenarioTest() {
   @Test
   fun `a property that names no level fails the build`() = runScenario {
     listOf("", "not-a-level", "true", "verbose").forEach { property ->
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .withArgument("--rerun-tasks")
         .withGradleProperty(name = "level", value = "LIFECYCLE")
         .withGradleProperty(name = "straitjacket.logForcedVersions", value = property)

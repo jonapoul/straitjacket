@@ -89,7 +89,8 @@ File-tree builders and assertions (`trimmedOutputContains`, `withoutConfiguratio
 `withGradleProperty`, ...) come from blueprint's `blueprint.test` package; local test helpers are
 in `src/test/kotlin/straitjacket/test/`.
 
-- The harness runs with the configuration cache **on** by default. A fixture that resolves a
+- The harness runs with the configuration cache **on** by default, via the local `assertThatTask`
+  in `test/assertions.kt` (blueprint's own one leaves it off). A fixture that resolves a
   configuration in `doLast` or shares mutable state between configuration and execution must call
   `.withoutConfigurationCache()`.
 - Scenarios resolve real artifacts from Maven Central, so tests need network access on a cold cache.

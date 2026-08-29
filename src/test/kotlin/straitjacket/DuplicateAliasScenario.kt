@@ -14,6 +14,7 @@ import blueprint.test.withGradleProperty
 import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * A module can be declared under more than one catalog alias with different versions, usually by
@@ -88,7 +89,7 @@ class DuplicateAliasScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the check passes on the version forced for a duplicated module`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "okioVersion", value = "3.0.0")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
@@ -101,7 +102,7 @@ class DuplicateAliasScenario : StraitjacketScenarioTest() {
   // result entirely, so the check would find nothing to report and pass.
   @Test
   fun `a version above every declared version is reported against the highest`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()
       .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")

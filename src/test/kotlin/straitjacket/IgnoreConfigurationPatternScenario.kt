@@ -1,6 +1,5 @@
 package straitjacket
 
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
@@ -12,6 +11,7 @@ import blueprint.test.trimmedOutputContains
 import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 /**
  * Two custom configurations each resolve okio above what the catalog declares, and the `ignore`
@@ -62,7 +62,7 @@ class IgnoreConfigurationPatternScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `both configurations are reported when nothing is ignored`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .failsBuild()
       .trimmedOutputContains("(in debugUnitTestRuntime, releaseUnitTestRuntime)")
   }
@@ -70,7 +70,7 @@ class IgnoreConfigurationPatternScenario : StraitjacketScenarioTest() {
   /** The behaviour before patterns existed, which a name without a `*` has to keep. */
   @Test
   fun `an exact name still ignores only that configuration`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "ignore", value = "debugUnitTestRuntime")
       .failsBuild()
       .trimmedOutputContains("(in releaseUnitTestRuntime)")
@@ -79,7 +79,7 @@ class IgnoreConfigurationPatternScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a leading wildcard ignores every matching configuration`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "ignore", value = "*UnitTestRuntime")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
@@ -87,7 +87,7 @@ class IgnoreConfigurationPatternScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a trailing wildcard ignores only the configurations it covers`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "ignore", value = "debug*")
       .failsBuild()
       .trimmedOutputContains("(in releaseUnitTestRuntime)")
@@ -96,7 +96,7 @@ class IgnoreConfigurationPatternScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a pattern matching no configuration changes nothing`() = runScenario {
-    assertThatTask(":straitjacketCheck")
+    assertThatTaskWithConfigurationCache(":straitjacketCheck")
       .withGradleProperty(name = "ignore", value = "*AndroidTest*")
       .failsBuild()
       .trimmedOutputContains("(in debugUnitTestRuntime, releaseUnitTestRuntime)")

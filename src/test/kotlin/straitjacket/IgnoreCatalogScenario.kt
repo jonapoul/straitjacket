@@ -1,7 +1,6 @@
 package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
-import blueprint.test.assertThatTask
 import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.libsVersionsToml
@@ -10,6 +9,7 @@ import blueprint.test.taskWasSkipped
 import blueprint.test.tasksSucceeded
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
+import straitjacket.test.assertThatTaskWithConfigurationCache
 
 class IgnoreCatalogScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -66,7 +66,7 @@ class IgnoreCatalogScenario : StraitjacketScenarioTest() {
   @Test
   fun `a dependency newer than an ignored catalog declares does not fail the check`() =
     runScenario {
-      assertThatTask(":straitjacketCheck")
+      assertThatTaskWithConfigurationCache(":straitjacketCheck")
         .buildsSuccessfully()
         .tasksSucceeded(":straitjacketCheck", ":straitjacketCheckLibs")
         .taskWasSkipped(":straitjacketCheckSomeOtherLibs")
