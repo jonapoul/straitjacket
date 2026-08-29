@@ -1,15 +1,16 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
 
 /**
  * A dependency newer than the catalog lives only in a custom resolvable configuration, so whether
@@ -53,14 +54,16 @@ class IgnoreConfigurationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a newer dependency in an ignored configuration does not fail the check`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=true")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = true)
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
   }
 
   @Test
   fun `a newer dependency in a non-ignored configuration fails the check`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = false)
       .failsBuild()
       .trimmedOutputContains("com.squareup.okio:okio:3.16.0 -> 3.16.4 (in custom)")
   }

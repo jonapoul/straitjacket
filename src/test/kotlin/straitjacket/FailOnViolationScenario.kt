@@ -4,17 +4,18 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEmpty
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withArgument
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withGradleProperty
 
 /**
  * okio resolves above what the catalog declares, so there is always something to report. Whether
@@ -64,7 +65,8 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a violation only warns when failOnViolation is off`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pfail=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = false)
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       .trimmedOutputContains(
@@ -80,7 +82,9 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
    */
   @Test
   fun `the report file records the violation when only warning`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pfail=false").buildsSuccessfully()
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = false)
+      .buildsSuccessfully()
 
     val report = rootDir.resolve("build/reports/straitjacket/libs.txt")
     assertThat(report.readText(), name = "report")
@@ -90,7 +94,8 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
   @Test
   fun `the warning names the report file`() = runScenario {
     val report = rootDir.resolve("build/reports/straitjacket/libs.txt")
-    assertThatTask(":straitjacketCheck", "-Pfail=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = false)
       .buildsSuccessfully()
       .trimmedOutputContains("See the Straitjacket report at ${report.absolutePath}")
   }
@@ -110,7 +115,8 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
           .trimIndent()
       )
 
-    assertThatTask(":straitjacketCheck", "-Pfail=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = false)
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
       .outputDoesNotContain("Not failing the build because failOnViolation is off.")
@@ -121,7 +127,8 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the Gradle property makes a warning fail the build`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pfail=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = false)
       .withGradleProperty("straitjacket.failOnViolation", true)
       .failsBuild()
       .trimmedOutputContains("com.squareup.okio:okio:3.16.0 -> 3.16.4")
@@ -129,7 +136,8 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the Gradle property stops a failure at a warning`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pfail=true")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "fail", value = true)
       .withGradleProperty("straitjacket.failOnViolation", false)
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
@@ -145,7 +153,9 @@ class FailOnViolationScenario : StraitjacketScenarioTest() {
   @Test
   fun `a non-boolean string for the property fails the build`() = runScenario {
     listOf("", "not-a-bool", "1", "TRUE", " false").forEach { property ->
-      assertThatTask(":straitjacketCheck", "-Pfail=false", "--rerun-tasks")
+      assertThatTask(":straitjacketCheck")
+        .withGradleProperty(name = "fail", value = false)
+        .withArgument("--rerun-tasks")
         .withGradleProperty(name = "straitjacket.failOnViolation", value = property)
         .failsBuild()
         .trimmedOutputContains(

@@ -1,13 +1,13 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
+import blueprint.test.trimmedOutputContains
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
 
 class TransitiveScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {

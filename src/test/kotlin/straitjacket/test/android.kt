@@ -3,6 +3,7 @@
 package straitjacket.test
 
 import blueprint.test.FileTree
+import blueprint.test.localProperties
 
 // Nothing in the AGP scenarios compiles Android sources, so these only have to be values AGP will
 // accept and any SDK the tests could run against will have.

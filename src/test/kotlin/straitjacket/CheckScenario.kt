@@ -1,16 +1,17 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
-import blueprint.test.taskSucceeded
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
+import blueprint.test.tasksSucceeded
+import blueprint.test.tasksWereSkipped
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.tasksSkipped
-import straitjacket.test.trimmedOutputContains
 
 class CheckScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -47,15 +48,16 @@ class CheckScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a directly requested older version passes the check`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-PokioVersion=3.6.0")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "okioVersion", value = "3.6.0")
       .buildsSuccessfully()
-      .taskSucceeded(":straitjacketCheckLibs")
-      .taskSucceeded(":straitjacketCheck")
+      .tasksSucceeded(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 
   @Test
   fun `a directly requested newer version fails the check`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()
       .trimmedOutputContains(
         "> Task :straitjacketCheckLibs FAILED",
@@ -76,8 +78,10 @@ class CheckScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `disabling the plugin skips the checks even for a newer version`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4", "-PstraitjacketEnabled=false")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "okioVersion", value = "3.16.4")
+      .withGradleProperty(name = "straitjacketEnabled", value = false)
       .buildsSuccessfully()
-      .tasksSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
+      .tasksWereSkipped(":straitjacketCheckLibs", ":straitjacketCheck")
   }
 }

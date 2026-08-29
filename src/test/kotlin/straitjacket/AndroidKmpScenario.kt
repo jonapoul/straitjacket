@@ -1,10 +1,15 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.COMPILE_SDK
 import straitjacket.test.MIN_SDK
@@ -12,11 +17,6 @@ import straitjacket.test.PRINT_RESOLVED_OKIO
 import straitjacket.test.RequiresAndroidSdk
 import straitjacket.test.StraitjacketScenarioTest
 import straitjacket.test.androidLocalProperties
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withoutConfigurationCache
 
 /**
  * [AndroidLibraryScenario] for a KMP module with an Android target alongside a JVM one, where the

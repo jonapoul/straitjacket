@@ -1,18 +1,19 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withGradleProperty
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
-import straitjacket.test.withoutConfigurationCache
 
 /**
  * A module can be declared under more than one catalog alias with different versions, usually by
@@ -75,7 +76,8 @@ class DuplicateAliasScenario : StraitjacketScenarioTest() {
   // 3.0.0 is below every version the catalog declares, so the forcing side is guaranteed to act.
   @Test
   fun `the highest version declared for a duplicated module is the one forced`() = runScenario {
-    assertThatTask(":printResolvedOkio", "-PokioVersion=3.0.0")
+    assertThatTask(":printResolvedOkio")
+      .withGradleProperty(name = "okioVersion", value = "3.0.0")
       .withoutConfigurationCache()
       .buildsSuccessfully()
       .outputContains("RESOLVED_OKIO=3.16.0")
@@ -86,7 +88,8 @@ class DuplicateAliasScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `the check passes on the version forced for a duplicated module`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-PokioVersion=3.0.0")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "okioVersion", value = "3.0.0")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
   }
@@ -98,7 +101,8 @@ class DuplicateAliasScenario : StraitjacketScenarioTest() {
   // result entirely, so the check would find nothing to report and pass.
   @Test
   fun `a version above every declared version is reported against the highest`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-PokioVersion=3.16.4")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "okioVersion", value = "3.16.4")
       .failsBuild()
       .trimmedOutputContains("> Task :straitjacketCheckLibs FAILED")
       .trimmedOutputContains(

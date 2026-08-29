@@ -2,19 +2,19 @@ package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.gradleProperties
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskFailed
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.gradleProperties
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
 
 class IsolatedProjectsScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {

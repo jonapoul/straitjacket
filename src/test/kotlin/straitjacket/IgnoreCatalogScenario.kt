@@ -2,14 +2,14 @@ package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
-import blueprint.test.taskSkipped
-import blueprint.test.taskSucceeded
+import blueprint.test.libsVersionsToml
+import blueprint.test.settingsGradleKts
+import blueprint.test.taskWasSkipped
+import blueprint.test.tasksSucceeded
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
 
 class IgnoreCatalogScenario : StraitjacketScenarioTest() {
   override val fileTree = fileTree {
@@ -68,8 +68,7 @@ class IgnoreCatalogScenario : StraitjacketScenarioTest() {
     runScenario {
       assertThatTask(":straitjacketCheck")
         .buildsSuccessfully()
-        .taskSucceeded(":straitjacketCheckLibs")
-        .taskSkipped(":straitjacketCheckSomeOtherLibs")
-        .taskSucceeded(":straitjacketCheck")
+        .tasksSucceeded(":straitjacketCheck", ":straitjacketCheckLibs")
+        .taskWasSkipped(":straitjacketCheckSomeOtherLibs")
     }
 }

@@ -1,16 +1,17 @@
 package straitjacket
 
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
 import blueprint.test.failsBuild
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputDoesNotContain
+import blueprint.test.settingsGradleKts
 import blueprint.test.taskSucceeded
+import blueprint.test.trimmedOutputContains
+import blueprint.test.withGradleProperty
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.trimmedOutputContains
 
 /**
  * Two modules resolve newer than the catalog declares. The `ignore` Gradle property picks the
@@ -65,7 +66,8 @@ class IgnoreModuleScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `an exact coordinate ignores only that module`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=com.squareup.okio:okio")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = "com.squareup.okio:okio")
       .failsBuild()
       .trimmedOutputContains("com.squareup.okhttp3:okhttp:4.11.0 -> 4.12.0")
       .outputDoesNotContain("com.squareup.okio")
@@ -73,7 +75,8 @@ class IgnoreModuleScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a wildcard name ignores every module in the group`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=com.squareup.okio:*")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = "com.squareup.okio:*")
       .failsBuild()
       .trimmedOutputContains("com.squareup.okhttp3:okhttp:4.11.0 -> 4.12.0")
       .outputDoesNotContain("com.squareup.okio")
@@ -81,7 +84,8 @@ class IgnoreModuleScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a wildcard group ignores the module whatever its group`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=*:okio")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = "*:okio")
       .failsBuild()
       .trimmedOutputContains("com.squareup.okhttp3:okhttp:4.11.0 -> 4.12.0")
       .outputDoesNotContain("com.squareup.okio")
@@ -89,7 +93,8 @@ class IgnoreModuleScenario : StraitjacketScenarioTest() {
 
   @Test
   fun `a wildcard covering both modules passes the check`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=com.squareup.*")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = "com.squareup.*")
       .buildsSuccessfully()
       .taskSucceeded(":straitjacketCheckLibs")
   }
@@ -100,7 +105,8 @@ class IgnoreModuleScenario : StraitjacketScenarioTest() {
    */
   @Test
   fun `dots in a pattern are not treated as wildcards`() = runScenario {
-    assertThatTask(":straitjacketCheck", "-Pignore=com.squareup.okioX:okio")
+    assertThatTask(":straitjacketCheck")
+      .withGradleProperty(name = "ignore", value = "com.squareup.okioX:okio")
       .failsBuild()
       .trimmedOutputContains(
         "com.squareup.okhttp3:okhttp:4.11.0 -> 4.12.0",

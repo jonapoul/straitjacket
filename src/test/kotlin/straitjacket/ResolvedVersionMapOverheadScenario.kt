@@ -2,14 +2,14 @@ package straitjacket
 
 import blueprint.test.DEFAULT_REPOSITORIES_KTS
 import blueprint.test.assertThatTask
+import blueprint.test.buildGradleKts
 import blueprint.test.buildsSuccessfully
+import blueprint.test.libsVersionsToml
 import blueprint.test.outputContains
+import blueprint.test.settingsGradleKts
+import blueprint.test.withoutConfigurationCache
 import kotlin.test.Test
 import straitjacket.test.StraitjacketScenarioTest
-import straitjacket.test.buildGradleKts
-import straitjacket.test.libsVersionsToml
-import straitjacket.test.settingsGradleKts
-import straitjacket.test.withoutConfigurationCache
 
 /**
  * Every per-catalog check task judges the same resolved graph, so the graph should only be walked
